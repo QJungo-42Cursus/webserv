@@ -3,10 +3,10 @@ CC =			c++
 RM =			rm -f
 CFLAGS =		-Wall -Wextra -Werror -std=c++98
 OBJS =			$(SRCS:.cpp=.o)
-SRCS =			main.cpp \
+SRCS =			src/main.cpp \
 
-# %.o: %.cpp
-# 	$(CC) $(CFLAGS) -c $< -o $@
+%.o: %.cpp
+	$(CC) -c $< -o $@
 
 all: $(NAME)
 
@@ -36,7 +36,7 @@ SAN =	-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all \
 		-fno-sanitize=null -fno-sanitize=alignment \
 		-g
 
-T_SRCS =		tests/t_main.cpp \
+T_SRCS =		tests/main.cpp \
 
 ifeq ($(shell uname), Linux)
 GTEST =		-lgtest
@@ -49,8 +49,8 @@ endif
 # san:
 # $(CC) $(T_CFLAGS) $(SAN) $(SRCS) $(T_SRCS) $(GTEST) -o $(NAME)
 
-$(T_NAME): $(OBJS) $(T_OBJS)
-	$(CC) $(T_CFLAGS)  $(T_OBJS) $(OBJS) $(GTEST) -o $(T_NAME)
+$(T_NAME): $(T_OBJS)
+	$(CC) $(T_CFLAGS) $(T_OBJS) -D _TEST_  $(SRCS) $(GTEST) -o $(T_NAME)
 
 t_all: $(T_NAME)
 

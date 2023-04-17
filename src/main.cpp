@@ -1,13 +1,10 @@
 #include <iostream>
 
-#ifndef _TEST_
-int __main___(int argc, char *argv[])
-{
-	_main__(argc, argv);
-}
+#ifdef _TEST_
+int _main(int argc, char *argv[])
+#else
+int main(int argc, char *argv[])
 #endif
-
-int _main__(int argc, char *argv[])
 {
 	if (argc == 1)
 	{
@@ -23,6 +20,5 @@ int _main__(int argc, char *argv[])
 		std::cerr << "Usage: " << argv[0] << " [path/to/file.conf]" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	std::cout << "Hello World!" << std::endl;
 	return 0;
 }
