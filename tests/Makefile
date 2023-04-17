@@ -2,7 +2,7 @@ NAME =		webserv_tests
 CC =		c++
 CFLAGS =	-Wall -Wextra -Werror -std=c++14
 RM =		rm -f
-GTEST =		./libgtest.a
+GTEST =		./gtest/libgtest.a
 OBJS =		$(SRCS:.cpp=.o)
 SAN =	-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all \
 		-fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow \
@@ -18,10 +18,10 @@ LEAKS =		leaks --atExit --
 endif
 
 san:
-	$(CC) $(CFLAGS) $(SAN) $(SRCS) $(GTEST) $(LIBFT_A) -o $(NAME)
+	$(CC) $(CFLAGS) $(SAN) $(SRCS) $(GTEST) -o $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(SAN) $(OBJS) $(GTEST) $(LIBFT_A) -o $(NAME)
+	$(CC) $(CFLAGS) $(OBJS) $(GTEST) -o $(NAME)
 
 all: $(NAME)
 
