@@ -19,17 +19,4 @@
   LOG(msg);                                                                    \
   exit(1);
 
-#define LOG_TILES(map)                                                         \
-  for (int i = 0; i < map.size.y; i++) {                                       \
-    for (int j = 0; j < map.size.x; j++) {                                     \
-      if (map.tiles[i][j] == 0)                                                \
-        printf(" ");                                                           \
-      else if (map.tiles[i][j] == 1)                                           \
-        printf("X");                                                           \
-      else if (map.tiles[i][j] == 2)                                           \
-        printf(".");                                                           \
-    }                                                                          \
-    printf("\n");                                                              \
-  }
-
 #endif /* DEBUG_HELPER_H */
