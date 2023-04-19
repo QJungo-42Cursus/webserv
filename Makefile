@@ -5,6 +5,7 @@ CFLAGS =		-Wall -Wextra -Werror -std=c++98
 OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \
 				src/config/Config.cpp \
+				src/server/Server.cpp \
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
