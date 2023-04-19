@@ -1,3 +1,5 @@
 **/*.o
 webserv
 **/*.dSYM
+.vscode
+.DS_Store
