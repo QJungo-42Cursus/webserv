@@ -7,11 +7,9 @@
 #include <unistd.h>
 #define PORT 8080
 
-int main(int argc, char **argv)
+int main()
 {
-	(void)argc;
-	(void)argv;
-	int status, valread, client_fd;
+	int status, client_fd;
 	struct sockaddr_in serv_addr;
 	const char *hello = "Hello from client";
 	char buffer[1024] = {0};
@@ -41,8 +39,7 @@ int main(int argc, char **argv)
 	}
 	send(client_fd, hello, strlen(hello), 0);
 	printf("Hello message sent\n");
-	valread = read(client_fd, buffer, 1024);
-	(void)valread;
+	read(client_fd, buffer, 1024);
 	printf("%s\n", buffer);
 
 	// closing the connected socket

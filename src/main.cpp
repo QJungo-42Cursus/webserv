@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 
 #ifdef _TEST_
 int _main(int argc, char *argv[])

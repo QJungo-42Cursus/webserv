@@ -4,9 +4,10 @@ RM =			rm -f
 CFLAGS =		-Wall -Wextra -Werror -std=c++98
 OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \
+				src/config/Config.cpp \
 
 %.o: %.cpp
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 all: $(NAME)
 

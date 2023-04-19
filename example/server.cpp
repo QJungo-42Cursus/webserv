@@ -1,23 +1,23 @@
 // Server side C/C++ program to demonstrate Socket
 // programming
 #include <netinet/in.h>
-#include <stdio.h>
-#include <cstdlib>
-#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#define PORT 8080
 
-int main(int argc, char **argv)
+#define PORT 8080
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+
+int main()
 {
-	(void)argc;
-	(void)argv;
-	int server_fd, new_socket, valread;
+	int server_fd, new_socket;
 	struct sockaddr_in address;
 	int opt = 1;
 	int addrlen = sizeof(address);
 	char buffer[1024] = {0};
-	const char *hello = "Hello from server";
 
 	// Creating socket file descriptor
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -56,15 +56,17 @@ int main(int argc, char **argv)
 		perror("accept");
 		exit(EXIT_FAILURE);
 	}
-	valread = read(new_socket, buffer, 1024);
-	(void)valread;
-	printf("%s\n", buffer);
-	send(new_socket, hello, strlen(hello), 0);
-	printf("Hello message sent\n");
 
-	// closing the connected socket
+	// TODO droit a read ?
+	read(new_socket, buffer, 1024);
+
+	std::cout << "'" << buffer << "'" << std::endl;
+	const char *hello = "Hello from server";
+	send(new_socket, hello, strlen(hello), 0);
+
+	// closing the connected socket TODO droit a close ?
 	close(new_socket);
-	// closing the listening socket
+	// closing the listening socket TODO droit a shutdown ?
 	shutdown(server_fd, SHUT_RDWR);
 	return 0;
 }
