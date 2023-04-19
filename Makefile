@@ -7,6 +7,7 @@ SRCS =			src/main.cpp \
 				src/config/Config.cpp \
 				src/server/Server.cpp \
 				src/server/Header.cpp \
+				src/server/Socket.cpp \
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
