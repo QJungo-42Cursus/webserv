@@ -61,8 +61,10 @@ int main()
 	read(new_socket, buffer, 1024);
 
 	std::cout << "'" << buffer << "'" << std::endl;
-	const char *hello = "Hello from server";
-	send(new_socket, hello, strlen(hello), 0);
+	const char *header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 100\r\n\r\n<html><body><h1>Hello World</h1></body></html>";
+	
+	
+	send(new_socket, header, strlen(header), 0);
 
 	// closing the connected socket TODO droit a close ?
 	close(new_socket);

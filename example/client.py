@@ -6,8 +6,7 @@ if __name__ == "__main__":
 	except requests.exceptions.ConnectionError as e:
 		print(f"Connection error: \"{e}\"")
 		exit()
-	response_json = response.json()
-	print(response_json)
+	print(response.text)
 
 """ Python will send the following request to the server:
 

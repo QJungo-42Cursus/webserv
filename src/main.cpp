@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include "server/Header.h"
 
 #ifdef _TEST_
 int _main(int argc, char *argv[])
@@ -7,6 +8,10 @@ int _main(int argc, char *argv[])
 int main(int argc, char *argv[])
 #endif
 {
+	Header header(Header::OK, "<html><body><h1>Hello World</h1></body></html>", Header::TEXT_HTML);
+	std::cout << header.getHeader() << std::endl;
+	return 0;
+
 	if (argc == 1)
 	{
 		// default config

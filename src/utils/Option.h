@@ -1,3 +1,6 @@
+#ifndef OPTION_H
+#define OPTION_H
+#include <exception>
 template <typename T>
 class Option
 {
@@ -21,7 +24,7 @@ public:
 		if (_isSome)
 			return _value;
 		else
-			throw std::runtime_error("Option is None");
+			throw std::exception("Option is None");
 		return _value;
 	}
 	const T &get() const
@@ -29,7 +32,7 @@ public:
 		if (_isSome)
 			return _value;
 		else
-			throw std::runtime_error("Option is None");
+			throw std::exception("Option is None");
 		return _value;
 	}
 
@@ -37,3 +40,5 @@ private:
 	bool _isSome;
 	T _value;
 };
+
+#endif // OPTION_H

@@ -6,6 +6,7 @@ OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \
 				src/config/Config.cpp \
 				src/server/Server.cpp \
+				src/server/Header.cpp \
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
