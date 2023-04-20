@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	socket.accept();
 
 	char buf[2000];
-	int l = read(socket.getSocketFd(), buf, 1000);
+	int l = recv(socket.getSocketFd(), buf, 1000, 0);
 	buf[l] = 0;
 	std::cout << buf;
 	send(socket.getSocketFd(), header.getHeader().c_str(), header.getHeader().size(), 0);
