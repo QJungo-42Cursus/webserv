@@ -45,11 +45,11 @@ struct Route
 class Config
 {
 private:
-	int port;
-	int host;
+	// int port;
+	// int host;
 	std::string server_name; // optional
 	std::string path_to_error_page;
-	int max_client_body_size;
+	// int max_client_body_size;
 	std::vector<Route> routes;
 };
 

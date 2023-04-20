@@ -24,7 +24,7 @@ public:
 		if (_isSome)
 			return _value;
 		else
-			throw std::exception("Option is None");
+			throw std::exception();
 		return _value;
 	}
 	const T &get() const
@@ -32,7 +32,7 @@ public:
 		if (_isSome)
 			return _value;
 		else
-			throw std::exception("Option is None");
+			throw std::exception();
 		return _value;
 	}
 

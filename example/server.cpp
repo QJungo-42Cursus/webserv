@@ -15,7 +15,6 @@ int main()
 {
 	int server_fd, new_socket;
 	struct sockaddr_in address;
-	int opt = 1;
 	int addrlen = sizeof(address);
 	char buffer[1024] = {0};
 
@@ -27,9 +26,13 @@ int main()
 	}
 
 	// Forcefully attaching socket to the port 8080
-	if (setsockopt(server_fd, SOL_SOCKET,
-				   SO_REUSEADDR | SO_REUSEPORT, &opt,
-				   sizeof(opt)))
+	int opt = 1;
+	if (setsockopt(
+		server_fd, 
+		SOL_SOCKET,
+		SO_REUSEADDR,
+		&opt,
+		sizeof(opt)))
 	{
 		perror("setsockopt");
 		exit(EXIT_FAILURE);
