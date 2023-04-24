@@ -6,7 +6,8 @@ OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \
 				src/config/Config.cpp \
 				src/server/Server.cpp \
-				src/server/Header.cpp \
+				src/server/ResponseHeader.cpp \
+				src/server/RequestHeader.cpp \
 				src/server/Socket.cpp \
 				src/server/PollFdWrapper.cpp \
 
@@ -32,6 +33,9 @@ re: fclean all
 
 t: all
 	./$(NAME)
+
+py: all
+	./$(NAME) & python3 tests/client.py
 
 T_NAME =	webserv_tests
 T_CFLAGS =	-Wall -Wextra -Werror -std=c++14

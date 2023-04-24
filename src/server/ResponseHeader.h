@@ -1,9 +1,9 @@
-#ifndef HEADER_H
-#define HEADER_H
+#ifndef ResponseHeader_H
+#define ResponseHeader_H
 
 #include <string>
 
-class Header
+class ResponseHeader
 {
 public:
 	struct ResponseCode
@@ -27,22 +27,25 @@ public:
 		};
 	};
 
+
 	/* Canonic form */
-	Header();
-	Header(int responseCode, std::string content, int contentType);
-	Header(const Header &other);
-	Header &operator=(const Header &other);
-	~Header();
+	ResponseHeader(int responseCode, std::string content, int contentType);
+	ResponseHeader(const ResponseHeader &other);
+	ResponseHeader &operator=(const ResponseHeader &other);
+	~ResponseHeader();
 
 	/* Methods */
 	std::string toString();
 	std::string getStringResponseCode();
 	std::string getStringContentType();
+	static ResponseHeader parse(const std::string &str);
 
 private:
+	ResponseHeader();
+
 	const int _responseCode;
 	const std::string _content;
 	const int _contentType;
 };
 
-#endif // HEADER_H
+#endif // ResponseHeader_H

@@ -19,9 +19,12 @@ public:
 	bool isOut() const;
 	bool isIn() const;
 
+	/* methods */
+	void poll(int timeout);
+
 private:
-	PollFdWrapper();
 	struct pollfd _pollfd;
+	PollFdWrapper();
 };
 
 #endif
