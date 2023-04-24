@@ -2,16 +2,16 @@ from time import sleep
 import requests
 
 if __name__ == "__main__":
-    print("python client started")
+    i = 0
     while True:
         try:
-            print("python req")
+            print(f"python req {i}")
             response = requests.get("http://127.0.0.1:8080")
             print("python rep:", response.text)
         except requests.exceptions.ConnectionError as e:
             print(f"Connection error: \"{e}\"")
-        
-        sleep(0.1)
+        i += 1
+        # sleep(0.1)
 
 """ Python will send the following request to the server:
 
