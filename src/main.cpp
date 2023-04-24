@@ -4,6 +4,7 @@
 #include "server/Header.h"
 #include "server/Socket.h"
 #include <poll.h>
+#include <errno.h>
 
 #ifdef _TEST_
 int _main(int argc, char *argv[])
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
 
 		if (poll(&n, 1, 1) == -1)
 		{
-			perror("poll");
+			std::cerr << "poll error" << std::endl;
 			exit(2);
 			//
 		}

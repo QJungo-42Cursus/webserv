@@ -2,15 +2,22 @@
 #define POLL_FD_WRAPPER
 #include <poll.h>
 
-class PollFdWrapper {
+class PollFdWrapper
+{
 public:
 	PollFdWrapper(int fd, short flags);
 
-
 	// only for revents
-	bool isErr();
-	bool isHup();
-	bool isNVal();
+	bool isErr() const;
+	bool isHup() const;
+	bool isNVal() const;
+	bool isRdNorm() const;
+	bool isRdBand() const;
+	bool isWrNorm() const;
+	bool isWrBand() const;
+	bool isPri() const;
+	bool isOut() const;
+	bool isIn() const;
 
 private:
 	PollFdWrapper();
@@ -22,18 +29,18 @@ private:
 /*
  * Requestable events.  If poll(2) finds any of these set, they are
  * copied to revents on return.
- 
-#define POLLIN          0x0001          /* any readable data available 
-#define POLLPRI         0x0002          /* OOB/Urgent readable data 
-#define POLLOUT         0x0004          /* file descriptor is writeable 
-#define POLLRDNORM      0x0040          /* non-OOB/URG data available 
-#define POLLWRNORM      POLLOUT         /* no write type differentiation 
-#define POLLRDBAND      0x0080          /* OOB/Urgent readable data 
-#define POLLWRBAND      0x0100          /* OOB/Urgent data can be written 
+
+#define POLLIN          0x0001           any readable data available
+#define POLLPRI         0x0002           OOB/Urgent readable data
+#define POLLOUT         0x0004           file descriptor is writeable
+#define POLLRDNORM      0x0040           non-OOB/URG data available
+#define POLLWRNORM      POLLOUT          no write type differentiation
+#define POLLRDBAND      0x0080           OOB/Urgent readable data
+#define POLLWRBAND      0x0100           OOB/Urgent data can be written
 
  * These events are set if they occur regardless of whether they were
  * requested.
-#define POLLERR         0x0008          /* some poll error occurred 
-#define POLLHUP         0x0010          /* file descriptor was "hung up" 
-#define POLLNVAL        0x0020          /* requested events "invalid" 
+#define POLLERR         0x0008           some poll error occurred
+#define POLLHUP         0x0010           file descriptor was "hung up"
+#define POLLNVAL        0x0020           requested events "invalid"
  */

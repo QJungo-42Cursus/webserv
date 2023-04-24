@@ -8,6 +8,7 @@ SRCS =			src/main.cpp \
 				src/server/Server.cpp \
 				src/server/Header.cpp \
 				src/server/Socket.cpp \
+				src/server/PollFdWrapper.cpp \
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
