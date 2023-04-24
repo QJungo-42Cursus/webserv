@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "server/Header.h"
 #include "server/Socket.h"
+#include <poll.h>
 
 #ifdef _TEST_
 int _main(int argc, char *argv[])
@@ -18,6 +19,15 @@ int main(int argc, char *argv[])
 	Header header(Header::ResponseCode::OK, "<html><body><h2>Hello World</h2></body></html>", Header::ContentType::TEXT_HTML);
 	while (true)
 	{
+		struct pollfd n;
+		n.fd = socket.fd();
+		n.events = POLLIN;
+
+		if (poll(&n, 1, 1000) == -1)
+		{
+			//
+		}
+		std::cout << n.revents << std::endl;
 		char buf[2000];
 		int l = recv(socket.fd(), buf, 1000, 0);
 		buf[l] = 0;
