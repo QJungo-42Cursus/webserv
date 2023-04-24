@@ -19,9 +19,8 @@ int main(int argc, char *argv[])
 	socket.bind();
 	socket.listen();
 	socket.accept(); // blocking until a client connects
-
-	ResponseHeader header(ResponseHeader::ResponseCode::OK, "<html><body><h2>Hello World</h2></body></html>", ResponseHeader::ContentType::TEXT_HTML);
 	PollFdWrapper n(socket.fd(), POLLIN);
+	ResponseHeader header(ResponseHeader::ResponseCode::OK, "<html><body><h2>Hello World</h2></body></html>", ResponseHeader::ContentType::TEXT_HTML);
 	while (true)
 	{
 		try
@@ -30,7 +29,6 @@ int main(int argc, char *argv[])
 		}
 		catch (std::exception &e)
 		{
-			std::cerr << "poll error with errno" << errno << std::endl;
 			break;
 		}
 		if (!n.isIn())
@@ -42,10 +40,14 @@ int main(int argc, char *argv[])
 		char buf[2000];
 		int l = recv(socket.fd(), buf, 1000, 0);
 		buf[l] = 0;
+		if (l == 0)
+		{
+			std::cout << "client disconnected" << std::endl;
+			break;
+		}
 		RequestHeader repHeader = RequestHeader(std::string(buf));
-		std::cout << repHeader._path << std::endl;
-		std::cout << repHeader._method << std::endl;
-		std::cout << repHeader._httpVersion << std::endl;
+		if (repHeader._path == "/exit")
+			break;
 		std::cout << buf;
 		std::string s_header = header.toString();
 		send(socket.fd(), s_header.c_str(), s_header.size(), 0);

@@ -9,7 +9,11 @@ RequestHeader::RequestHeader(const std::string &request)
 	else if (firstLine.substr(0, firstLine.find(" ")) == "POST")
 		_method = Method::POST;
 	else
+	{
+		std::cerr << "method not supported" << firstLine.substr(0, firstLine.find(" "))
+				  << std::endl;
 		throw std::exception();
+	}
 
 	int pathStart = firstLine.find("/");
 	int pathEnd = firstLine.find(" ", pathStart);
@@ -23,7 +27,10 @@ RequestHeader::RequestHeader(const std::string &request)
 	else if (httpVersion == "HTTP/1.0")
 		_httpVersion = 0;
 	else
+	{
+		std::cerr << "http version not supported" << std::endl;
 		throw std::exception();
+	}
 }
 
 RequestHeader::~RequestHeader()

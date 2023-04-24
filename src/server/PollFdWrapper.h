@@ -21,6 +21,7 @@ public:
 
 	/* methods */
 	void poll(int timeout);
+	// static 
 
 private:
 	struct pollfd _pollfd;

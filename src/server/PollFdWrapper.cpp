@@ -1,20 +1,30 @@
 #include "PollFdWrapper.h"
 #include <exception>
+#include <iostream>
+#include <cstring>
 
 PollFdWrapper::PollFdWrapper(int fd, short flags)
 {
+	std::memset(&_pollfd, 0, sizeof(_pollfd));
 	_pollfd.fd = fd;
 	_pollfd.events = flags;
+}
+
+PollFdWrapper::PollFdWrapper()
+{
+	std::memset(&_pollfd, 0, sizeof(_pollfd));
 }
 
 void PollFdWrapper::poll(int timeout)
 {
 	if (::poll(&_pollfd, 1, timeout) == -1)
 	{
+		std::cerr << "poll error" << std::endl;
 		throw std::exception();
 	}
 	if (isErr() || isHup() || isNVal())
 	{
+		std::cerr << "revents error" << std::endl;
 		// TODO : handle error more precisely
 		throw std::exception();
 	}

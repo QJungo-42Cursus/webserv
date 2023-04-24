@@ -9,7 +9,10 @@ Socket::~Socket()
 	// TODO check s'il est closed ?
 }
 
-Socket::Socket(int protocol, int port, int opt) : _protocol(protocol), _port(port), _opt(opt) {
+Socket::Socket(int protocol, int port, int opt) : _protocol(protocol), _port(port), _opt(opt)
+{
+	_socket_fd = -1;
+
 	/// Creating socket file descriptor
 	_server_fd = socket(AF_INET, SOCK_STREAM, _protocol);
 	if (_server_fd == -1)
@@ -50,9 +53,8 @@ void Socket::listen()
 
 void Socket::accept()
 {
-	int addrlen = sizeof(_address);
-	_socket_fd = ::accept(_server_fd, (struct sockaddr *)&_address,
-						  (socklen_t *)&addrlen);
+	socklen_t addrlen = sizeof(_address);
+	_socket_fd = ::accept(_server_fd, (struct sockaddr *)&_address, &addrlen);
 	if (_socket_fd == -1)
 	{
 		throw std::exception();
@@ -61,12 +63,12 @@ void Socket::accept()
 
 void Socket::close()
 {
-	// TODO juste le mettre dans le destructeur
+	// TODO juste le mettre dans le destructeur ?
 	::close(_socket_fd);
 	shutdown(_server_fd, SHUT_RDWR);
 }
 
-int Socket::fd() const 
+int Socket::fd() const
 {
 	return _socket_fd;
 }
