@@ -61,11 +61,12 @@ void Socket::accept()
 
 void Socket::close()
 {
+	// TODO juste le mettre dans le destructeur
 	::close(_socket_fd);
 	shutdown(_server_fd, SHUT_RDWR);
 }
 
-int Socket::getSocketFd() const 
+int Socket::fd() const 
 {
 	return _socket_fd;
 }

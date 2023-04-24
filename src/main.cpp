@@ -10,19 +10,21 @@ int _main(int argc, char *argv[])
 int main(int argc, char *argv[])
 #endif
 {
-	Header header(Header::OK, "<html><body><h1>Hello World</h1></body></html>", Header::TEXT_HTML);
-	// std::cout << header.getHeader() << std::endl;
-
 	Socket socket(0, 8080, 1);
 	socket.bind();
 	socket.listen();
 	socket.accept();
 
-	char buf[2000];
-	int l = recv(socket.getSocketFd(), buf, 1000, 0);
-	buf[l] = 0;
-	std::cout << buf;
-	send(socket.getSocketFd(), header.getHeader().c_str(), header.getHeader().size(), 0);
+	Header header(Header::ResponseCode::OK, "<html><body><h2>Hello World</h2></body></html>", Header::ContentType::TEXT_HTML);
+	while (true)
+	{
+		char buf[2000];
+		int l = recv(socket.fd(), buf, 1000, 0);
+		buf[l] = 0;
+		std::cout << buf;
+		std::string s_header = header.toString();
+		send(socket.fd(), s_header.c_str(), s_header.size(), 0);
+	}
 
 	socket.close();
 

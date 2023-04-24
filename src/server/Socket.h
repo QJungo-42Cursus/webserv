@@ -19,7 +19,7 @@ public:
 	void close();
 
 	/* Getters */
-	int getSocketFd() const;
+	int fd() const;
 
 private:
 	int _server_fd;

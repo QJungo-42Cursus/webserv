@@ -2,10 +2,10 @@
 #include <string>
 #include <sstream>
 
-Header::Header(int responseCode, std::string content, ContentType contentType) : _responseCode(responseCode), _content(content), _contentType(contentType) {}
+Header::Header(int responseCode, std::string content, int contentType) : _responseCode(responseCode), _content(content), _contentType(contentType) {}
 Header::~Header() {}
 
-std::string Header::getHeader()
+std::string Header::toString()
 {
 	std::string header;
 
@@ -26,13 +26,13 @@ std::string Header::getStringResponseCode()
 {
 	switch (_responseCode)
 	{
-	case OK:
+	case ResponseCode::OK:
 		return "200 OK";
-	case BAD_REQUEST:
+	case ResponseCode::BAD_REQUEST:
 		return "400 Bad Request";
-	case NOT_FOUND:
+	case ResponseCode::NOT_FOUND:
 		return "404 Not Found";
-	case INTERNAL_SERVER_ERROR:
+	case ResponseCode::INTERNAL_SERVER_ERROR:
 		return "500 Internal Server Error";
 	default:
 		throw std::exception();
@@ -43,9 +43,9 @@ std::string Header::getStringContentType()
 {
 	switch (_contentType)
 	{
-	case TEXT_HTML:
+	case ContentType::TEXT_HTML:
 		return "text/html";
-	case TEXT_PLAIN:
+	case ContentType::TEXT_PLAIN:
 		return "text/plain";
 	default:
 		throw std::exception();
