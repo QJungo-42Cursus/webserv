@@ -8,57 +8,39 @@
 #include "server/Socket.h"
 #include <poll.h>
 #include <errno.h>
+#include <string.h>
 
 #ifdef _TEST_
 int _main(int argc, char *argv[])
 #else
-int main(int argc, char *argv[])
+int main()
 #endif
 {
 	Socket socket(0, 8080, 1);
 	socket.bind();
-	socket.listen();
-	socket.accept(); // blocking until a client connects
-	PollFdWrapper n(socket.fd(), POLLIN);
-	ResponseHeader header(ResponseHeader::ResponseCode::OK, "<html><body><h2>Hello World</h2></body></html>", ResponseHeader::ContentType::TEXT_HTML);
-	while (true)
+	socket.listen(3);
+
+	PollFdWrapper pollFd(socket.fd(), POLLIN);
+
+	while (1)
 	{
-		try
-		{
-			n.poll(1000);
-		}
-		catch (std::exception &e)
-		{
-			break;
-		}
-		if (!n.isIn())
-		{
-			std::cout << "not isIN" << std::endl;
-			continue;
-		}
+		pollFd.poll(-1);
+		int fd = socket.accept();
+		ResponseHeader header(ResponseHeader::ResponseCode::OK, "<html><body><h2>Hello World</h2></body></html>", ResponseHeader::ContentType::TEXT_HTML);
 
 		char buf[2000];
-		int l = recv(socket.fd(), buf, 1000, 0);
+		int l = recv(fd, buf, 1000, 0);
 		buf[l] = 0;
-		if (l == 0)
-		{
-			std::cout << "client disconnected" << std::endl;
-			break;
-		}
-		RequestHeader repHeader = RequestHeader(std::string(buf));
-		if (repHeader._path == "/exit")
-			break;
 		std::cout << buf;
 		std::string s_header = header.toString();
-		send(socket.fd(), s_header.c_str(), s_header.size(), 0);
-		// socket.listen();
-		// socket.accept(); // blocking until a client connects
+		send(fd, s_header.c_str(), s_header.size(), 0);
+		close(fd);
 	}
 
 	socket.close();
+}
 
-	return 0;
-
+/*
 	if (argc == 1)
 	{
 		// default config
@@ -75,3 +57,4 @@ int main(int argc, char *argv[])
 	}
 	return 0;
 }
+*/

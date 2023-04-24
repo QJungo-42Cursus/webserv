@@ -14,16 +14,15 @@ public:
 
 	/* Methods */
 	void bind();
-	void listen();
-	void accept();
+	void listen(int max_queue_size);
+	int accept();
 	void close();
 
 	/* Getters */
 	int fd() const;
 
 private:
-	int _server_fd;
-	int _socket_fd;
+	int _fd;
 	struct sockaddr_in _address;
 
 	const int _protocol;

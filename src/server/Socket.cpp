@@ -6,23 +6,21 @@
 
 Socket::~Socket()
 {
-	// TODO check s'il est closed ?
+	shutdown(_fd, SHUT_RDWR);
 }
 
 Socket::Socket(int protocol, int port, int opt) : _protocol(protocol), _port(port), _opt(opt)
 {
-	_socket_fd = -1;
-
 	/// Creating socket file descriptor
-	_server_fd = socket(AF_INET, SOCK_STREAM, _protocol);
-	if (_server_fd == -1)
+	_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, _protocol);
+	if (_fd == -1)
 	{
 		std::cerr << "caca" << std::endl;
 		throw std::exception();
 	}
 
 	/// Forcefully attaching socket to the port 8080
-	if (setsockopt(_server_fd, SOL_SOCKET, SO_REUSEADDR, &_opt, sizeof(_opt)))
+	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &_opt, sizeof(_opt)))
 	{
 		throw std::exception();
 	}
@@ -33,42 +31,32 @@ Socket::Socket(int protocol, int port, int opt) : _protocol(protocol), _port(por
 
 void Socket::bind()
 {
-	int res = ::bind(_server_fd, (struct sockaddr *)&_address,
-					 sizeof(_address));
-	if (res == -1)
+	if (::bind(_fd, (struct sockaddr *)&_address, sizeof(_address)) == -1)
 	{
 		throw std::exception();
 	}
 }
 
-void Socket::listen()
+void Socket::listen(int max_queue_size)
 {
-	int max_queue_size = 3; // TODO
-	int res = ::listen(_server_fd, max_queue_size);
-	if (res == -1)
+	if (::listen(_fd, max_queue_size) == -1)
 	{
 		throw std::exception();
 	}
 }
 
-void Socket::accept()
+int Socket::accept()
 {
 	socklen_t addrlen = sizeof(_address);
-	_socket_fd = ::accept(_server_fd, (struct sockaddr *)&_address, &addrlen);
-	if (_socket_fd == -1)
+	int socket_fd = ::accept(_fd, (struct sockaddr *)&_address, &addrlen);
+	if (socket_fd == -1)
 	{
 		throw std::exception();
 	}
-}
-
-void Socket::close()
-{
-	// TODO juste le mettre dans le destructeur ?
-	::close(_socket_fd);
-	shutdown(_server_fd, SHUT_RDWR);
+	return socket_fd;
 }
 
 int Socket::fd() const
 {
-	return _socket_fd;
+	return _fd;
 }
