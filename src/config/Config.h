@@ -4,19 +4,7 @@
 #include <map>
 #include <vector>
 #include <string>
-
-enum HttpMethods
-{
-	GET,
-	POST,
-	PUT,
-	DELETE,
-	HEAD,
-	OPTIONS,
-	TRACE,
-	CONNECT
-};
-
+#include "../http/Methods.h"
 struct Cgi
 {
 };
@@ -24,7 +12,7 @@ struct Cgi
 struct Route
 {
 	/// list of the methods accepted by the route
-	std::map<HttpMethods, bool> accepted_methods;
+	std::map<Http::Methods::EMethods, bool> accepted_methods;
 
 	/// http redirection
 	Option<std::string> redirect;

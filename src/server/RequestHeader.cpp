@@ -1,42 +1,92 @@
 #include "RequestHeader.h"
+#include "../http/http.h"
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+
+static Http::Methods::EMethods getMethod(const std::string &firstLine)
+{
+	std::string method = firstLine.substr(0, firstLine.find(" "));
+	if (method == "GET")
+		return Http::Methods::GET;
+	else if (method == "POST")
+		return Http::Methods::POST;
+	else if (method == "DELETE")
+		return Http::Methods::DELETE;
+	else if (method == "PUT" || method == "HEAD" || method == "OPTIONS" || method == "TRACE" || method == "CONNECT")
+		throw Http::UnimplementedMethodException();
+	else
+		throw Http::UnknownMethodException();
+}
 
 RequestHeader::RequestHeader(const std::string &request)
 {
-	std::string firstLine = request.substr(0, request.find("\r\n"));
-
-	if (firstLine.substr(0, firstLine.find(" ")) == "GET")
-		_method = Method::GET;
-	else if (firstLine.substr(0, firstLine.find(" ")) == "POST")
-		_method = Method::POST;
-	else
+	std::string firstLine;
 	{
-		std::cerr << "method not supported" << firstLine.substr(0, firstLine.find(" "))
-				  << std::endl;
-		throw std::exception();
+		/// First line
+		if (request.empty())
+			throw Http::InvalidRequestException();
+		firstLine = request.substr(0, request.find("\r\n"));
+		if (firstLine.empty())
+			throw Http::InvalidRequestException();
+
+		/// Method
+		_method = getMethod(firstLine);
+
+		/// Path
+		int pathStart = firstLine.find("/");
+		int pathEnd = firstLine.find(" ", pathStart);
+		if (pathStart == 0 || pathEnd == pathStart)
+			throw Http::InvalidRequestException();
+		_path = firstLine.substr(pathStart, pathEnd - pathStart);
+
+		/// HTTP version
+		int httpVersionStart = firstLine.find("HTTP/");
+		int httpVersionEnd = firstLine.find("\r\n", httpVersionStart);
+		std::string httpVersion = firstLine.substr(httpVersionStart, httpVersionEnd - httpVersionStart);
+		if (httpVersion != "HTTP/1.1")
+		{
+			throw Http::UnsupportedVersionException();
+		}
 	}
 
-	int pathStart = firstLine.find("/");
-	int pathEnd = firstLine.find(" ", pathStart);
-	_path = firstLine.substr(pathStart, pathEnd - pathStart);
+	std::string request_n = request;
+	request_n.erase(0, request_n.find("\r\n") + 2);
 
-	int httpVersionStart = firstLine.find("HTTP/");
-	int httpVersionEnd = firstLine.find("\r\n", httpVersionStart);
-	std::string httpVersion = firstLine.substr(httpVersionStart, httpVersionEnd - httpVersionStart);
-	if (httpVersion == "HTTP/1.1")
-		_httpVersion = 1;
-	else if (httpVersion == "HTTP/1.0")
-		_httpVersion = 0;
-	else
+	size_t pos = 0;
+	std::string token;
+	std::string delimiter = "\r\n";
+	while ((pos = request_n.find(delimiter)) != std::string::npos)
 	{
-		std::cerr << "http version not supported" << std::endl;
-		throw std::exception();
+		size_t n_pos = request_n.find("\r\n\r\n");
+		if (n_pos != std::string::npos && n_pos <= pos)
+			break;
+		token = request_n.substr(0, pos);
+		size_t middle = token.find(": ");
+		if (middle == std::string::npos)
+		{
+			std::cout << request << "Invalid header: '" << token << "'" << std::endl;
+			throw Http::InvalidRequestException();
+		}
+		std::string key = token.substr(0, middle);
+		std::string value = token.substr(middle, token.length());
+		_headers[key] = value;
+		request_n.erase(0, pos + delimiter.length());
 	}
+	// TODO: last header
+	// TODO: body
 }
 
-RequestHeader::~RequestHeader()
+const std::string &RequestHeader::getPath() const
 {
+	return _path;
 }
 
-RequestHeader::RequestHeader()
+void RequestHeader::logHeaders() const
 {
+	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	{
+		std::cout << "[" << it->first << "] '" << it->second << "'" << std::endl;
+	}
 }
