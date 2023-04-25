@@ -10,6 +10,8 @@ PollFdWrapper::PollFdWrapper(int fd, short flags)
 	_pollfd.events = flags;
 }
 
+const int PollFdWrapper::ALL = POLLERR|POLLHUP|POLLNVAL|POLLRDNORM|POLLRDBAND|POLLWRNORM|POLLWRBAND|POLLPRI|POLLIN;
+
 PollFdWrapper::PollFdWrapper()
 {
 	std::memset(&_pollfd, 0, sizeof(_pollfd));
@@ -40,3 +42,18 @@ bool PollFdWrapper::isWrBand() const { return POLLWRBAND & _pollfd.revents; }
 bool PollFdWrapper::isPri() const { return POLLPRI & _pollfd.revents; }
 bool PollFdWrapper::isOut() const { return POLLOUT & _pollfd.revents; }
 bool PollFdWrapper::isIn() const { return POLLIN & _pollfd.revents; }
+
+void PollFdWrapper::log() const {
+	std::cout 
+	<< " isErr: " << isErr()
+	<< " isHup: " << isHup()
+	<< " isNVal: " << isNVal()
+	<< " isRdBand: " << isRdBand()
+	<< " isRdNorm: " << isRdNorm()
+	<< " isWrBand: " << isWrBand()
+	<< " isWrNorm: " << isWrNorm()
+	<< " isPri: " << isPri()
+	<< " isOut: " << isOut()
+	<< " isIn: " << isIn()
+	<< std::endl;
+}

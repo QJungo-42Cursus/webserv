@@ -21,7 +21,9 @@ public:
 
 	/* methods */
 	void poll(int timeout);
-	// static 
+	void log() const;
+
+	static const int ALL;
 
 private:
 	struct pollfd _pollfd;

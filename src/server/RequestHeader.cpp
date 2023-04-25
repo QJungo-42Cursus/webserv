@@ -26,7 +26,7 @@ RequestHeader::RequestHeader(const std::string &request)
 	{
 		/// First line
 		if (request.empty())
-			throw Http::InvalidRequestException();
+			throw Http::EmptyRequestException();
 		firstLine = request.substr(0, request.find("\r\n"));
 		if (firstLine.empty())
 			throw Http::InvalidRequestException();

@@ -20,28 +20,39 @@ int main()
 	Socket socket(0, 8080, 1);
 	socket.bind();
 	socket.listen(3);
+	PollFdWrapper socketPollFd(socket.fd(), PollFdWrapper::ALL);
 
-	PollFdWrapper pollFd(socket.fd(), POLLIN);
-
+	char buf[2000];
+	int fd = -1;
 	while (1)
 	{
-		pollFd.poll(-1);
-		int fd = socket.accept();
-		ResponseHeader header(Http::ResponseCode::OK, "<html><body><h2>Hello World</h2></body></html>", Http::ContentType::TEXT_HTML);
+		socketPollFd.poll(-1);
+		socketPollFd.log();
+		std::cout << "fd : " << fd << std::endl;
+		fd = socket.accept();
 
-		char buf[2000];
-		int l = recv(fd, buf, 1000, 0);
+
+
+		memset(buf, 0, 2000);
+		ssize_t l = recv(fd, buf, 1999, 0);
+		// if (l == -1)continue;
 		buf[l] = 0;
-		RequestHeader requestHeader(buf);
-		std::cout << requestHeader.getPath() << std::endl;
-		requestHeader.logHeaders();
-		// std::cout << buf;
-		std::string s_header = header.toString();
-		send(fd, s_header.c_str(), s_header.size(), 0);
-		close(fd);
-	}
 
-	socket.close();
+
+		// RequestHeader requestHeader(buf);
+		// std::cout << requestHeader.getPath() << std::endl;
+		// requestHeader.logHeaders();
+		std::cout << l << " - '" << buf << "'" << std::endl;
+		ResponseHeader header(Http::ResponseCode::OK, "<html><body><h2>Hello World</h2></body></html>", Http::ContentType::TEXT_HTML);
+		
+		ResponseHeader headerF(Http::ResponseCode::NOT_FOUND, "<html><body><h1>404</h1></body></html>", Http::ContentType::TEXT_HTML);
+		std::string s_header = header.toString();
+		// if (l == -1)			s_header = headerF.toString();
+		send(fd, s_header.c_str(), s_header.size(), 0);
+		shutdown(fd, SHUT_RDWR);
+		close(fd);
+
+	}
 }
 
 /*

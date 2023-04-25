@@ -27,6 +27,16 @@ namespace Http
 		}
 	};
 
+	struct EmptyRequestException : public InvalidRequestException
+	{
+		const char *what() const throw()
+		{
+			return "Http request is empty";
+		}
+	};
+
+	
+
 	struct UnsupportedVersionException : public std::exception
 	{
 		const char *what() const throw()

@@ -16,15 +16,19 @@ public:
 	void bind();
 	void listen(int max_queue_size);
 	int accept();
-	void close();
 
 	/* Getters */
 	int fd() const;
 
+	int setSocketName(int sub_socket) const;
+
+	const struct sockaddr_in & getAddress();
+
+
 private:
 	int _fd;
 	struct sockaddr_in _address;
-
+	socklen_t _addrlen;
 	const int _protocol;
 	const int _port;
 	const int _opt; // options

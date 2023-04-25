@@ -11,7 +11,7 @@ if __name__ == "__main__":
         except requests.exceptions.ConnectionError as e:
             print(f"Connection error: \"{e}\"")
         i += 1
-        # sleep(0.1)
+        sleep(0.1)
 
 """ Python will send the following request to the server:
 
