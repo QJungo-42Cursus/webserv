@@ -1,0 +1,33 @@
+servers:
+  - server:
+      server_name: domain1.com
+      port: 8080
+      address: 127.0.0.1
+      default_error:
+        - 404: ./404.html # juste un repertoire ?
+      client_max_body_size: 10m # taille en mega
+      methods: GET POST DELETE
+      locations:
+        - /:
+          methods: GET
+          redirection: /404.html
+          root: PWD/www/ # path ?
+          repertory_listing: false
+          index: index.html
+        - /admin/:
+          methods: GET POST
+          root: PWD/www/admin/
+          repertory_listing: true
+        - /new_user:
+          methods: POST
+          cgi_extension: .php
+          cgi_path: PWD/cgi-bin/
+        - /get_user:
+          methods: GET
+          cgi_extension: .php
+          cgi_path: PWD/cgi-bin/
+
+  - server:
+      server_name: domain2.com
+      port: 8080
+      address: 127.0.0.2
