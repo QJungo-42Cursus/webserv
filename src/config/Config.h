@@ -39,15 +39,16 @@ struct Route
 class Config
 {
 public:
-	static std::vector<Config> parse(const std::string &path);
+	static std::vector<Config *> parse_servers(const std::string &path);
+	static Config *parse(std::string &server_config);
 
 private:
+	Config() {}
 	Option<std::string> _server_name;
 	Option<int> _port;
-	Option<int> _host;
-	std::map<int, std::string> _error_pages;
-	Option<int> _client_max_body_size;
+	Option<std::string> _client_max_body_size;
 	Option<short> _methods;
+	std::map<int, std::string> _error_pages;
 	std::vector<Route> _routes;
 };
 

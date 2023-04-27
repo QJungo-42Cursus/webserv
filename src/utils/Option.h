@@ -5,6 +5,7 @@ template <typename T>
 class Option
 {
 public:
+	Option() : _isSome(false) {}
 	static Option<T> None() { return Option<T>(); }
 	static Option<T> Some(T value) { return Option<T>(value); }
 
@@ -24,7 +25,7 @@ public:
 		if (_isSome)
 			return _value;
 		else
-			throw std::exception();
+			throw NoneException();
 		return _value;
 	}
 
@@ -33,17 +34,19 @@ public:
 		if (_isSome)
 			return _value;
 		else
-			throw std::exception();
+			throw NoneException();
 		return _value;
 	}
+
+	struct NoneException : public std::exception
+	{
+		const char *what() const throw() { return "Tried to unwrap None"; }
+	};
 
 private:
 	bool _isSome;
 	T _value;
-
-	Option() : _isSome(false) {}
 	Option(T value) : _isSome(true), _value(value) {}
-	// Option(const Option<T> &other) : _isSome(other._isSome), _value(other._value) {}
 };
 
 #endif // OPTION_H

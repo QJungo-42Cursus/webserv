@@ -6,7 +6,6 @@ servers: # liste de serveurs
   - server: # un serveur
       server_name: domain1.com # nom du serveur (optionnel)
       port: 8080 # port du serveur (optionnel, default: 80)
-      address: 127.0.0.1 # adresse du serveur (optionnel, default: 0.0.0.0)
       error_pages: # liste des pages d'erreur par defaut (optionnel)
         - 404: ./404.html
       client_max_body_size: 10m # taille max des requetes en megaoctets (optionnel, default: 1m TODO: 1m ?)
@@ -34,12 +33,13 @@ servers: # liste de serveurs
 
             # - /admin/:
 
-  - server:
-      server_name: domain2.com
-      port: 8080
-      address: 127.0.0.2
+#   - server:
+#       server_name: domain2.com
+#       port: 8080
 
-  - server:
-      server_name: domain2.com
-      port: 8080
-      address: 127.0.0.2
+
+
+
+#   - server:
+#       server_name: domain2.com
+#       port: 8080
