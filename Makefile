@@ -10,6 +10,7 @@ SRCS =			src/main.cpp \
 				src/server/RequestHeader.cpp \
 				src/server/Socket.cpp \
 				src/server/PollFdWrapper.cpp \
+				src/utils/split.cpp \
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@

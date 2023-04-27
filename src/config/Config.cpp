@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include "../utils/utils.h"
 
 static void open_file(std::ifstream &file, std::string filename)
 {
@@ -70,7 +71,6 @@ static bool are_tirets_valid(const std::string &str)
 	return true;
 }
 
-/// Remove the padding from the left of the string, at each line
 static std::string unpad_from_left(const std::string &str, size_t padding)
 {
 	std::string result = "";
@@ -85,6 +85,31 @@ static std::string unpad_from_left(const std::string &str, size_t padding)
 	return result;
 }
 
+std::size_t find_where_its_first_line_of_word(const std::string &str, const std::string &word)
+{
+	std::size_t pos = str.find(word);
+	if (pos == std::string::npos)
+		return std::string::npos;
+	if (pos != 0 && str[pos - 1] != '\n')
+		return std::string::npos;
+	return pos;
+}
+
+static std::size_t find_next_non_whitespace_linestart(const std::string &str)
+{
+	std::size_t pos = 0;
+
+	while (true)
+	{
+		if (str[pos] != ' ' && str[pos] != '\n')
+			return pos;
+		pos = str.substr(pos).find("\n") + pos;
+		if (pos == std::string::npos)
+			return std::string::npos;
+		pos++;
+	}
+	return pos;
+}
 
 std::vector<Config> Config::parse(const std::string &path)
 {
@@ -101,13 +126,14 @@ std::vector<Config> Config::parse(const std::string &path)
 	/// Check if the file is empty
 	if (file_content.empty())
 		throw std::runtime_error("Empty config file");
-	
+
 	/// Check if the file contains only valid characters
 	if (is_any_quote(file_content))
 		throw std::runtime_error("Invalid config file, invalid quotes");
 
+	// Check if the file contains only valid keywords + column (key: value)
+
 	/// Check if the file starts with "servers"
-	// TODO check if the file starts with "servers" + ":" + "\n" -> all keys: !
 	if ("servers" != file_content.substr(0, 7))
 		throw std::runtime_error("Invalid config file, missing 'servers' keyword at the beginning");
 	file_content = file_content.erase(0, file_content.find_first_of("\n") + 1);
@@ -125,22 +151,38 @@ std::vector<Config> Config::parse(const std::string &path)
 	{
 		if (file_content.empty())
 			break;
-		if ("server" != file_content.substr(0, 6))
-			throw std::runtime_error("Invalid config file, missing 'server' keyword at the beginning");
-		file_content = file_content.erase(0, file_content.find_first_of("\n") + 1);
-		size_t pos = file_content.find("server"); // TODO nonoteunoe
-		servers.push_back(file_content.substr(0, pos));
+		std::string first_line = file_content.substr(0, file_content.find_first_of("\n"));
+		std::cout << "first_line: " << first_line << std::endl;
+		std::vector<std::string> splitted = split(first_line, ':');
+		if ("server" != splitted[0])
+			throw std::runtime_error("Invalid config file, '" + splitted[0] + "' is not a valid keyword");
+		if (splitted.size() != 1)
+			throw std::runtime_error("Invalid config file, '" + splitted[0] + "' keyword must be alone on its line");
+		file_content.erase(0, file_content.find_first_of("\n") + 1);
 
+		std::size_t pos = find_next_non_whitespace_linestart(file_content);
+		// file_content.find("server:");
+		servers.push_back(file_content.substr(0, pos));
+		if (pos != std::string::npos)
+		{
+		}
+		else
+		{
+			// throw std::runtime_error("Invalid config file, missing 'server' keyword at the end");
+		}
 		file_content = file_content.erase(0, pos);
 	}
 
 	for (std::vector<std::string>::iterator it = servers.begin(); it != servers.end(); ++it)
 	{
-		std::cout << *it << std::endl << std::endl;
+		std::cout << *it
+				  << std::endl
+				  << std::endl
+				  << std::endl
+				  << std::endl;
 	}
 
 	std::vector<Config> configs;
 
-	std::cout << file_content;
 	return configs;
 }

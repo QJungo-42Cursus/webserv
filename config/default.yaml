@@ -39,7 +39,7 @@ servers: # liste de serveurs
       port: 8080
       address: 127.0.0.2
 
-  - oservera:
+  - server:
       server_name: domain2.com
       port: 8080
       address: 127.0.0.2
