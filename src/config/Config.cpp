@@ -232,13 +232,6 @@ static std::string get_value_from_line(const std::string &line)
 	return line.substr(pos + 2);
 }
 
-// Option<std::string> _server_name;
-// Option<int> _port;
-// Option<std::string> _client_max_body_size;
-// Option<short> _methods;
-// std::map<int, std::string> _error_pages;
-// std::vector<Route> _routes;
-
 static Option<short> parse_methods(std::string &str)
 {
 	Option<std::string> line = find_keyvalue_line(str, "methods", true);
@@ -264,6 +257,97 @@ static Option<short> parse_methods(std::string &str)
 	return Option<short>::Some(methods);
 }
 
+static Option<std::string> get_list_content(std::string &str, std::string key)
+{
+	std::string lines = "";
+	bool found = false;
+	std::istringstream iss(str);
+	for (std::string line; std::getline(iss, line);)
+	{
+		if (found)
+		{
+			if (line.substr(0, 2) == "  ")
+			{
+				str.erase(str.find(line), line.size() + 1);
+				lines += line + "\n";
+			}
+			else
+				break;
+		}
+		else if (line.substr(0, key.size()) == key)
+		{
+			found = true;
+			str.erase(str.find(line), line.size() + 1);
+		}
+	}
+	if (!found)
+		return Option<std::string>::None();
+	lines = unpad_from_left(lines, 2, true);
+	return Option<std::string>::Some(lines);
+}
+
+static std::map<int, std::string> parse_error_pages(std::string &str)
+{
+	std::map<int, std::string> map;
+	Option<std::string> m_lines = get_list_content(str, "error_pages");
+	if (m_lines.isNone())
+		return map;
+	std::string lines = m_lines.unwrap();
+	std::vector<std::string> splitted = split(lines, '\n');
+	for (std::vector<std::string>::iterator it = splitted.begin(); it != splitted.end(); ++it)
+	{
+		if ("- " != it->substr(0, 2))
+			throw std::runtime_error("Invalid config file, an error_page must be in the form '- <error_code> <path>'");
+		std::string line = it->substr(2);
+		std::vector<std::string> splitted = split(line, ':');
+		if (splitted.size() != 2)
+			throw std::runtime_error("Invalid config file, an error_page must be in the form '- <error_code> <path>'");
+		if (splitted[0].size() != 3)
+			throw std::runtime_error("Invalid config file, an error_code must be 3 digits long");
+		if (splitted[1][0] != ' ')
+			throw std::runtime_error("Invalid config file, an error_page must be in the form '- <error_code> <path>'");
+		map[std::atoi(splitted[0].c_str())] = splitted[1].substr(1);
+	}
+	return map;
+}
+
+static std::map<std::string, Route> parse_routes(std::string &str)
+{
+	std::map<std::string, Route> map;
+	Option<std::string> m_lines = get_list_content(str, "routes");
+	if (m_lines.isNone())
+		return map;
+	std::string lines = m_lines.unwrap();
+	std::istringstream iss(lines);
+	std::string line;
+	for (std::string line; std::getline(iss, line);)
+	{
+		if ("- " != line.substr(0, 2))
+			throw std::runtime_error("Invalid config file, a route must be in the form '- <path> \\n <infos>'");
+		std::string route = line.substr(2);
+		std::vector<std::string> splitted = split(route, ':');
+		if (splitted.size() != 1)
+			throw std::runtime_error("Invalid config file, a route must be in the form '- <path> \\n <infos>'");
+		std::string route_path = splitted[0];
+		std::string route_infos = "";
+		// for (std::string line; std::getline(iss, line);)
+		// {
+		// 	if (line.substr(0, 4) == "    ")
+		// 	{
+		// 		route_infos += line + "\n";
+		// 		str.erase(str.find(line), line.size() + 1);
+		// 	}
+		// 	else
+		// 		break;
+		// }
+
+		// std::cout << "route_infos: " << route_infos << std::endl;
+		// map[splitted[0]] = Route(splitted[1]);
+	}
+
+	return map;
+}
+
 Config *Config::parse(std::string &server_config)
 {
 	Config *config = new Config();
@@ -285,11 +369,7 @@ Config *Config::parse(std::string &server_config)
 			config->_port = Option<int>::Some(std::atoi(get_value_from_line(line.unwrap()).c_str()));
 	}
 	config->_methods = parse_methods(server_config);
-
-	std::cout << server_config << std::endl;
-	// std::cout << config->_server_name.unwrap() << std::endl;
-	// std::cout << config->_client_max_body_size.unwrap() << std::endl;
-	// std::cout << config->_port.unwrap() << std::endl;
-	// std::cout << config->_methods.unwrap() << std::endl;
+	config->_error_pages = parse_error_pages(server_config);
+	config->_routes = parse_routes(server_config);
 	return config;
 }

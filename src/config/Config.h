@@ -21,7 +21,7 @@ struct Route
 	Option<std::string> redirection; // = Option<std::string>::None();
 
 	/// c'est le path de la route sur le serveur
-	std::string root;
+	Option<std::string> root;
 
 	/// if the directory listing is enabled
 	bool repertory_listing;
@@ -49,7 +49,7 @@ private:
 	Option<std::string> _client_max_body_size;
 	Option<short> _methods;
 	std::map<int, std::string> _error_pages;
-	std::vector<Route> _routes;
+	std::map<std::string, Route> _routes;
 };
 
 #endif
