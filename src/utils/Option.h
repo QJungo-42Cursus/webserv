@@ -5,10 +5,9 @@ template <typename T>
 class Option
 {
 public:
-	/* Canonic form */
-	Option() : _isSome(false) {}
-	Option(T value) : _isSome(true), _value(value) {}
-	Option(const Option<T> &other) : _isSome(other._isSome), _value(other._value) {}
+	static Option<T> None() { return Option<T>(); }
+	static Option<T> Some(T value) { return Option<T>(value); }
+
 	Option<T> &operator=(const Option<T> &other)
 	{
 		_isSome = other._isSome;
@@ -19,15 +18,8 @@ public:
 
 	bool isSome() const { return _isSome; }
 	bool isNone() const { return !_isSome; }
-	T &get()
-	{
-		if (_isSome)
-			return _value;
-		else
-			throw std::exception();
-		return _value;
-	}
-	const T &get() const
+
+	T &unwrap()
 	{
 		if (_isSome)
 			return _value;
@@ -36,11 +28,22 @@ public:
 		return _value;
 	}
 
-	static Option<T> None() { return Option<T>(); }
+	const T &unwrap() const
+	{
+		if (_isSome)
+			return _value;
+		else
+			throw std::exception();
+		return _value;
+	}
 
 private:
 	bool _isSome;
 	T _value;
+
+	Option() : _isSome(false) {}
+	Option(T value) : _isSome(true), _value(value) {}
+	// Option(const Option<T> &other) : _isSome(other._isSome), _value(other._value) {}
 };
 
 #endif // OPTION_H

@@ -15,10 +15,10 @@ struct Cgi
 struct Route
 {
 	/// bit flag of the methods accepted by the route
-	short methods = Http::Methods::GET;
+	short methods; // = Http::Methods::GET;
 
 	/// http redirection
-	Option<std::string> redirection = Option<std::string>::None();
+	Option<std::string> redirection; // = Option<std::string>::None();
 
 	/// c'est le path de la route sur le serveur
 	std::string root;
@@ -27,13 +27,13 @@ struct Route
 	bool repertory_listing;
 
 	/// file to serve if path is a dir
-	Option<std::string> index = Option<std::string>::None();
+	Option<std::string> index; // = Option<std::string>::None();
 
 	/// The cgi configuration
 	Option<Cgi> cgi;
 
 	/// The upload directory (disabled if None)
-	Option<std::string> upload_directory = Option<std::string>::None();
+	Option<std::string> upload_directory; // = Option<std::string>::None();
 };
 
 class Config
@@ -45,7 +45,7 @@ private:
 	Option<std::string> _server_name;
 	Option<int> _port;
 	Option<int> _host;
-	std::map<std::int, std::string> _error_pages;
+	std::map<int, std::string> _error_pages;
 	Option<int> _client_max_body_size;
 	Option<short> _methods;
 	std::vector<Route> _routes;

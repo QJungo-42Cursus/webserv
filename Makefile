@@ -32,7 +32,7 @@ re: fclean all
 ################## TESTS ##################
 
 t: all
-	./$(NAME)
+	@./$(NAME)
 
 py: all
 	./$(NAME) & python3 tests/client.py
