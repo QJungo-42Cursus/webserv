@@ -36,6 +36,8 @@ public:
 		return _value;
 	}
 
+	static Option<T> None() { return Option<T>(); }
+
 private:
 	bool _isSome;
 	T _value;
