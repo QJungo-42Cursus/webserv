@@ -13,7 +13,8 @@ namespace Http
 			HEAD,
 			OPTIONS,
 			TRACE,
-			CONNECT
+			CONNECT,
+			UNKNOWN
 		};
 	}
 }
