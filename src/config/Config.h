@@ -17,18 +17,21 @@ public:
 
 	static Config *parse(std::string &server_config);
 
+	void log() const;
+
 	~Config();
+
+	Option<std::string> server_name;
+	Option<int> port;
+	Option<std::string> client_max_body_size;
+	Option<short> methods;
+	std::map<int, std::string> error_pages;
+	std::map<std::string, Route *> routes;
 private:
 	Config()
 	{}
 
 
-	Option<std::string> _server_name;
-	Option<int> _port;
-	Option<std::string> _client_max_body_size;
-	Option<short> _methods;
-	std::map<int, std::string> _error_pages;
-	std::map<std::string, Route*> _routes;
 };
 
 #endif

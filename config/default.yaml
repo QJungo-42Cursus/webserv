@@ -1,8 +1,4 @@
-#oetnuh
-
-
 servers: # liste de serveurs
-  #
   - server: # un serveur
       server_name: domain1.com # nom du serveur (optionnel)
       port: 8080 # port du serveur (optionnel, default: 80)
@@ -30,16 +26,6 @@ servers: # liste de serveurs
         - /get_user:
             methods: GET
             cgi: .php PWD/cgi-bin/
-
-            # - /admin/:
-
-#   - server:
-#       server_name: domain2.com
-#       port: 8080
-
-
-
-
-#   - server:
-#       server_name: domain2.com
-#       port: 8080
+  - server:
+      server_name: domain2.com
+      port: 8080

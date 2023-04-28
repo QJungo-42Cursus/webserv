@@ -5,6 +5,7 @@
 #include <string>
 #include <cstdlib>
 #include <sstream>
+#include <set>
 #include "../utils/utils.h"
 #include "yaml_helper.h"
 
@@ -145,6 +146,16 @@ static std::size_t find_next_non_whitespace_linestart(const std::string &str)
 
 std::vector<Config *> Config::parse_servers(const std::string &path)
 {
+	/// Check file extension and path validity
+	if (path.empty())
+		throw std::runtime_error("Empty config file path");
+	std::size_t ext_pos = path.find(".yaml");
+	if (ext_pos == std::string::npos)
+		throw std::runtime_error("Invalid config file extension");
+	if (ext_pos != path.size() - 5)
+		throw std::runtime_error("Invalid config file extension");
+
+
 	/// Get the file content without comments
 	std::ifstream file;
 	open_file_or_throw(file, path);
@@ -306,27 +317,48 @@ Config *Config::parse(std::string &server_config)
 	{
 		Option<std::string> line = find_key_value_line(server_config, "server_name", true);
 		if (line.isSome())
-			config->_server_name = Option<std::string>::Some(get_value_from_line(line.unwrap()));
+			config->server_name = Option<std::string>::Some(get_value_from_line(line.unwrap()));
 	}
 	{
 		Option<std::string> line = find_key_value_line(server_config, "client_max_body_size", true);
 		if (line.isSome())
-			config->_client_max_body_size = Option<std::string>::Some(get_value_from_line(line.unwrap()));
+			config->client_max_body_size = Option<std::string>::Some(get_value_from_line(line.unwrap()));
 	}
 	{
 		Option<std::string> line = find_key_value_line(server_config, "port", true);
 		if (line.isSome())
-			config->_port = Option<int>::Some(std::atoi(get_value_from_line(line.unwrap()).c_str()));
+			config->port = Option<int>::Some(std::atoi(get_value_from_line(line.unwrap()).c_str()));
 	}
-	config->_methods = parse_methods(server_config);
-	config->_error_pages = parse_error_pages(server_config);
-	config->_routes = parse_routes(server_config);
+	config->methods = parse_methods(server_config);
+	config->error_pages = parse_error_pages(server_config);
+	config->routes = parse_routes(server_config);
 	return config;
 }
 
 Config::~Config()
 {
-	for (std::map<std::string, Route *>::iterator it = _routes.begin(); it != _routes.end(); ++it)
+	for (std::map<std::string, Route *>::iterator it = routes.begin(); it != routes.end(); ++it)
 		delete it->second;
+
+}
+
+void Config::log() const
+{
+	std::cout << "server_name: " << server_name << std::endl;
+	std::cout << "client_max_body_size: " << client_max_body_size << std::endl;
+	std::cout << "port: " << port << std::endl;
+//	std::cout << "methods: ";
+//	for (std::set<std::string>::iterator it = methods.begin(); it != methods.end(); ++it)
+//		std::cout << *it << " ";
+	std::cout << std::endl;
+	std::cout << "error_pages: " << std::endl;
+	for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it)
+		std::cout << it->first << " " << it->second << std::endl;
+	std::cout << "routes: " << std::endl;
+	for (std::map<std::string, Route *>::const_iterator it = routes.begin(); it != routes.end(); ++it)
+	{
+		std::cout << it->first << std::endl;
+		it->second->log();
+	}
 
 }
