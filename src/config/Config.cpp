@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <sstream>
 #include "../utils/utils.h"
+#include "yaml_helper.h"
 
 static void open_file_or_throw(std::ifstream &file, std::string filename)
 {
@@ -67,20 +68,20 @@ static void throw_if_invalid_tiret(const std::string &str)
 }
 
 static std::string KNOWN_KEYWORD[] = {
-	"server",
-	"servers",
-	"port",
-	"error_pages",
-	"server_name",
-	"methods",
-	"root",
-	"routes",
-	"index",
-	"redirection",
-	"repertory_listing",
-	"cgi",
-	"upload",
-	"client_max_body_size",
+		"server",
+		"servers",
+		"port",
+		"error_pages",
+		"server_name",
+		"methods",
+		"root",
+		"routes",
+		"index",
+		"redirection",
+		"repertory_listing",
+		"cgi",
+		"upload",
+		"client_max_body_size",
 };
 
 /// Check if the file contains only valid keywords + column (key: value)
@@ -124,22 +125,6 @@ static void throw_if_invalid_keyword(const std::string &str)
 				throw std::runtime_error("Invalid config file, need only one space after ':'");
 		}
 	}
-}
-
-static std::string unpad_from_left(const std::string &str, size_t padding, bool throw_if_something)
-{
-	std::string result = "";
-	std::istringstream iss(str);
-	for (std::string line; std::getline(iss, line);)
-	{
-		if (line.size() > padding)
-			result += line.substr(padding) + "\n";
-		else if (throw_if_something)
-			throw std::runtime_error("Invalid config file, empty line");
-		else
-			result += "\n";
-	}
-	return result;
 }
 
 static std::size_t find_next_non_whitespace_linestart(const std::string &str)
@@ -207,56 +192,6 @@ std::vector<Config *> Config::parse_servers(const std::string &path)
 	return configs;
 }
 
-static Option<std::string> find_keyvalue_line(std::string &str, const std::string &key, bool remove_line)
-{
-	std::istringstream iss(str);
-	for (std::string line; std::getline(iss, line);)
-	{
-		if (line.substr(0, key.size()) == key)
-		{
-			if (remove_line)
-				str.erase(str.find(line), line.size() + 1);
-			return Option<std::string>::Some(line);
-		}
-	}
-	return Option<std::string>::None();
-}
-
-static std::string get_value_from_line(const std::string &line)
-{
-	std::size_t pos = line.find_first_of(": ");
-	if (pos == std::string::npos)
-		throw std::runtime_error("Invalid config file, missing ':'");
-	if (line.size() == pos + 2)
-		throw std::runtime_error("Invalid config file, missing value after ':'");
-	return line.substr(pos + 2);
-}
-
-static Option<short> parse_methods(std::string &str)
-{
-	Option<std::string> line = find_keyvalue_line(str, "methods", true);
-	if (line.isNone())
-		return Option<short>::None();
-	std::string value = get_value_from_line(line.unwrap());
-
-	short methods = 0;
-	std::vector<std::string> splitted = split(value, ' ');
-	for (std::vector<std::string>::iterator it = splitted.begin(); it != splitted.end(); ++it)
-	{
-		if (*it == "GET")
-			methods |= Http::Methods::GET;
-		else if (*it == "POST")
-			methods |= Http::Methods::POST;
-		else if (*it == "DELETE")
-			methods |= Http::Methods::DELETE;
-		else if (*it == "PUT" || *it == "OPTIONS" || *it == "TRACE" || *it == "PATCH" || *it == "HEAD" || *it == "CONNECT")
-			throw std::runtime_error("Invalid config file, " + *it + " method is not implemented");
-		else
-			throw std::runtime_error("Invalid config file, '" + *it + "' is not a valid method");
-	}
-	return Option<short>::Some(methods);
-}
-
 static Option<std::string> get_list_content(std::string &str, std::string key)
 {
 	std::string lines = "";
@@ -293,58 +228,74 @@ static std::map<int, std::string> parse_error_pages(std::string &str)
 	if (m_lines.isNone())
 		return map;
 	std::string lines = m_lines.unwrap();
-	std::vector<std::string> splitted = split(lines, '\n');
-	for (std::vector<std::string>::iterator it = splitted.begin(); it != splitted.end(); ++it)
+	std::vector<std::string> error_pages_lines = split(lines, '\n');
+	for (std::vector<std::string>::iterator it = error_pages_lines.begin(); it != error_pages_lines.end(); ++it)
 	{
 		if ("- " != it->substr(0, 2))
 			throw std::runtime_error("Invalid config file, an error_page must be in the form '- <error_code> <path>'");
 		std::string line = it->substr(2);
-		std::vector<std::string> splitted = split(line, ':');
-		if (splitted.size() != 2)
+		std::vector<std::string> words = split(line, ':');
+		if (words.size() != 2)
 			throw std::runtime_error("Invalid config file, an error_page must be in the form '- <error_code> <path>'");
-		if (splitted[0].size() != 3)
+		if (words[0].size() != 3)
 			throw std::runtime_error("Invalid config file, an error_code must be 3 digits long");
-		if (splitted[1][0] != ' ')
+		if (words[1][0] != ' ')
 			throw std::runtime_error("Invalid config file, an error_page must be in the form '- <error_code> <path>'");
-		map[std::atoi(splitted[0].c_str())] = splitted[1].substr(1);
+		map[std::atoi(words[0].c_str())] = words[1].substr(1);
 	}
 	return map;
 }
 
-static std::map<std::string, Route> parse_routes(std::string &str)
+static std::map<std::string, Route *> parse_routes(std::string &str)
 {
-	std::map<std::string, Route> map;
+	std::map<std::string, Route *> map;
 	Option<std::string> m_lines = get_list_content(str, "routes");
 	if (m_lines.isNone())
 		return map;
 	std::string lines = m_lines.unwrap();
 	std::istringstream iss(lines);
-	std::string line;
+	bool new_route;
+	bool is_first = true;
+	std::string route_path;
+	std::string route_infos;
+
 	for (std::string line; std::getline(iss, line);)
 	{
-		if ("- " != line.substr(0, 2))
-			throw std::runtime_error("Invalid config file, a route must be in the form '- <path> \\n <infos>'");
-		std::string route = line.substr(2);
-		std::vector<std::string> splitted = split(route, ':');
-		if (splitted.size() != 1)
-			throw std::runtime_error("Invalid config file, a route must be in the form '- <path> \\n <infos>'");
-		std::string route_path = splitted[0];
-		std::string route_infos = "";
-		// for (std::string line; std::getline(iss, line);)
-		// {
-		// 	if (line.substr(0, 4) == "    ")
-		// 	{
-		// 		route_infos += line + "\n";
-		// 		str.erase(str.find(line), line.size() + 1);
-		// 	}
-		// 	else
-		// 		break;
-		// }
+		new_route = line.substr(0, 2) == "- ";
+		if (is_first && !new_route)
+			throw std::runtime_error("Invalid config file, a route must start with '- '");
+		if (!is_first && new_route)
+		{
+			if (!map.count(route_path))
+			{
+				Route *route = Route::parse(route_infos);
+				route_infos = "";
+				map[route_path] = route;
+			}
+		}
+		if (new_route)
+		{
+			is_first = false;
+			std::string route_line = line.substr(2);
+			std::size_t pos = route_line.find(':');
+			if (pos == std::string::npos)
+				throw std::runtime_error("Invalid config file, missing ':'");
+			if (route_line.size() != pos + 1)
+				throw std::runtime_error(
+						"Invalid config file, there should be no character after ':' in a list of routes");
+			route_path = route_line.substr(0, pos);
+		}
+		else
+		{
+			route_infos += line + "\n";
+		}
 
-		// std::cout << "route_infos: " << route_infos << std::endl;
-		// map[splitted[0]] = Route(splitted[1]);
 	}
-
+	if (!map.count(route_path))
+	{
+		Route *route = Route::parse(route_infos);
+		map[route_path] = route;
+	}
 	return map;
 }
 
@@ -353,18 +304,17 @@ Config *Config::parse(std::string &server_config)
 	Config *config = new Config();
 
 	{
-		Option<std::string> line = find_keyvalue_line(server_config, "server_name", true);
+		Option<std::string> line = find_key_value_line(server_config, "server_name", true);
 		if (line.isSome())
 			config->_server_name = Option<std::string>::Some(get_value_from_line(line.unwrap()));
 	}
 	{
-
-		Option<std::string> line = find_keyvalue_line(server_config, "client_max_body_size", true);
+		Option<std::string> line = find_key_value_line(server_config, "client_max_body_size", true);
 		if (line.isSome())
 			config->_client_max_body_size = Option<std::string>::Some(get_value_from_line(line.unwrap()));
 	}
 	{
-		Option<std::string> line = find_keyvalue_line(server_config, "port", true);
+		Option<std::string> line = find_key_value_line(server_config, "port", true);
 		if (line.isSome())
 			config->_port = Option<int>::Some(std::atoi(get_value_from_line(line.unwrap()).c_str()));
 	}
@@ -372,4 +322,11 @@ Config *Config::parse(std::string &server_config)
 	config->_error_pages = parse_error_pages(server_config);
 	config->_routes = parse_routes(server_config);
 	return config;
+}
+
+Config::~Config()
+{
+	for (std::map<std::string, Route *>::iterator it = _routes.begin(); it != _routes.end(); ++it)
+		delete it->second;
+
 }

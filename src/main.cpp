@@ -6,6 +6,7 @@
 #ifdef _TEST_
 int _main(int argc, char *argv[])
 #else
+
 int main(int argc, char *argv[])
 #endif
 {
@@ -23,6 +24,5 @@ int main(int argc, char *argv[])
 	// free configs
 	for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
 		delete *it;
-
 	return 0;
 }

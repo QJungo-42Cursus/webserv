@@ -4,7 +4,10 @@ RM =			rm -f
 CFLAGS =		-Wall -Wextra -Werror -std=c++98
 OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \
+				src/config/CgiConfig.cpp \
 				src/config/Config.cpp \
+				src/config/Route.cpp \
+				src/config/yaml_helper.cpp \
 				src/server/Server.cpp \
 				src/server/ResponseHeader.cpp \
 				src/server/RequestHeader.cpp \

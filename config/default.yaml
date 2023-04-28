@@ -2,7 +2,7 @@
 
 
 servers: # liste de serveurs
-#
+  #
   - server: # un serveur
       server_name: domain1.com # nom du serveur (optionnel)
       port: 8080 # port du serveur (optionnel, default: 80)
@@ -21,7 +21,7 @@ servers: # liste de serveurs
             cgi: .php PWD/cgi-bin/ # cgi 'extension' 'racine du cgi' (optionnel)
             methods: POST
         - /uploader:
-            methods: PUT
+            methods: POST
             upload: PWD/www/files/ # racine du telechargement, active l'upload de fichier (optionnel)
         - /admin/:
             methods: GET POST
