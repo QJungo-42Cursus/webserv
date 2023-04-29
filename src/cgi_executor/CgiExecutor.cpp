@@ -17,8 +17,12 @@ int fork1()
 
 std::string CgiExecutor::execute()
 {
-	std::string _path = "./cgi/";
-	char *const argv[2] = {(char *) _path.c_str(), NULL};
+	std::string _path = "cgi/ubuntu_cgi_tester";
+	char *const argv[] = {(char *) _path.c_str(), (char *) "www/index.html",
+						  NULL};
+	//https://fr.wikipedia.org/wiki/Variables_d%27environnement_CGI
+	char *const envp[] = {(char *) "REQUEST_METHOD=GET", (char *) "SERVER_PROTOCOL=HTTP/1.1", (char *) "PATH_INFO=www/",
+						  NULL};
 
 	int fd[2];
 	if (pipe(fd))
@@ -26,10 +30,11 @@ std::string CgiExecutor::execute()
 
 	if (fork() == 0)
 	{
+		std::cout << "child" << std::endl;
 		close(fd[STDIN_FILENO]);
 		dup2(fd[STDOUT_FILENO], STDOUT_FILENO);
 		close(fd[STDOUT_FILENO]);
-		execvpe(_path.c_str(), argv, NULL);
+		execvpe(_path.c_str(), argv, envp);
 		std::cout << "oups..." << std::endl;
 		perror("execvpe: ");
 		exit(1);
