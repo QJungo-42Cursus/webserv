@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include "config/Config.h"
 
-#define DEFAULT_CONFIG_FILE_PATH "/home/qjungo/Cursus/webserv/config/default.yaml"
+#define DEFAULT_CONFIG_FILE_PATH "./config/default.yaml"
 
 
 #ifdef _TEST_
