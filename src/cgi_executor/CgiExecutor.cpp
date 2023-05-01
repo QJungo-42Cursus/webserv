@@ -7,6 +7,7 @@
 #include "CgiExecutor.h"
 #include <cstdlib>
 #include <unistd.h>
+#include <ctime>
 
 int fork1()
 {
@@ -24,7 +25,8 @@ std::string CgiExecutor::execute()
 	#else
 	std::string _path = "cgi/cgi_tester";
 	#endif
-	// std::string _path = "cgi/python_cgi";
+
+	_path = "cgi/python_cgi";
 
 	char *const argv[] = {
 		(char *) _path.c_str(),
@@ -34,7 +36,7 @@ std::string CgiExecutor::execute()
 
 	char *const envp[] = {
 		(char *) "REQUEST_METHOD=GET", 
-		(char *) "PATH_INFO=index.html",
+		(char *) "PATH_INFO=/",
 		// (char *) "PATH_INFO=\"\"",
 		(char *) "SERVER_PROTOCOL=HTTP/1.1", 
 		(char *) "CONTENT_TYPE=",
@@ -51,29 +53,74 @@ std::string CgiExecutor::execute()
 		NULL
 	};
 
-	int fd[2];
-	if (pipe(fd))
+	int fd_std[2];
+	if (pipe(fd_std))
+		throw std::exception();
+	int fd_err[2];
+	if (pipe(fd_err))
 		throw std::exception();
 
-	if (fork() == 0)
+	int pid;
+	pid = fork();
+	if (pid == 0)
 	{
-		std::cout << "child" << std::endl;
-		close(fd[STDIN_FILENO]);
-		dup2(fd[STDOUT_FILENO], STDOUT_FILENO);
-		close(fd[STDOUT_FILENO]);
+		close(fd_std[STDIN_FILENO]);
+		close(fd_err[STDIN_FILENO]);
+		dup2(fd_std[STDOUT_FILENO], STDOUT_FILENO);
+		dup2(fd_err[STDOUT_FILENO], STDERR_FILENO);
+		close(fd_std[STDOUT_FILENO]);
+		close(fd_err[STDOUT_FILENO]);
 		execve(_path.c_str(), argv, envp);
 		std::cout << "oups..." << std::endl;
 		perror("execvpe: ");
 		exit(1);
 	}
-	close(fd[STDOUT_FILENO]);
-	wait(NULL);
-	char buff[2048];
-	int count = read(fd[STDIN_FILENO], buff, 2047);
-	buff[count] = 0;
-	close(fd[STDIN_FILENO]);
+	close(fd_std[STDOUT_FILENO]);
+	close(fd_err[STDOUT_FILENO]);
 
-	std::cout << "buff: '" << buff << "'" << std::endl;
+	const int S_TIMEOUT = 2;
 
-	return std::string();
+	std::time_t s_start = std::time(0);
+	bool did_timeout = false;
+	int exit_status = 0;
+	while(1)
+	{
+		std::time_t elapsed = std::time(0) - s_start;
+		did_timeout = (elapsed >= S_TIMEOUT);
+		if (did_timeout)
+			break;
+		exit_status = -1;
+		waitpid(pid, &exit_status, WNOHANG);
+		if (exit_status != -1)
+		{
+			exit_status = WEXITSTATUS(exit_status);
+			break;
+		}
+		usleep(10000);
+	}
+	if (did_timeout)
+	{
+		std::cout << "TIMEOUT !! (the waitpid on the lauched CGI wait for too long)" << std::endl;
+		return "";
+	}
+
+	std::cout << "exit status: " << exit_status << std::endl;
+
+	if (exit_status == 0)
+	{
+		char buff[2048] = { 0 };
+		int count = read(fd_std[STDIN_FILENO], buff, 2047);
+		buff[count] = 0;
+		std::cout << "buff: '" << buff << "'" << std::endl;
+	}
+	else 
+	{
+		char buff[2048] = { 0 };
+		int count = read(fd_err[STDIN_FILENO], buff, 2047);
+		buff[count] = 0;
+		std::cout << "ebuff: '" << buff << "'" << std::endl;
+	}
+	close(fd_err[STDIN_FILENO]);
+	close(fd_std[STDIN_FILENO]);
+	return "";
 }
