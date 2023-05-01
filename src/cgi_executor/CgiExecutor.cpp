@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <sys/wait.h>
 #include "CgiExecutor.h"
+#include <cstdlib>
+#include <unistd.h>
 
 int fork1()
 {
@@ -17,12 +19,37 @@ int fork1()
 
 std::string CgiExecutor::execute()
 {
+	#ifdef __LINUX__
 	std::string _path = "cgi/ubuntu_cgi_tester";
-	char *const argv[] = {(char *) _path.c_str(), (char *) "www/index.html",
-						  NULL};
-	//https://fr.wikipedia.org/wiki/Variables_d%27environnement_CGI
-	char *const envp[] = {(char *) "REQUEST_METHOD=GET", (char *) "SERVER_PROTOCOL=HTTP/1.1", (char *) "PATH_INFO=www/",
-						  NULL};
+	#else
+	std::string _path = "cgi/cgi_tester";
+	#endif
+	// std::string _path = "cgi/python_cgi";
+
+	char *const argv[] = {
+		(char *) _path.c_str(),
+		(char *) "www/index.html",
+	 	NULL
+	};
+
+	char *const envp[] = {
+		(char *) "REQUEST_METHOD=GET", 
+		(char *) "PATH_INFO=index.html",
+		// (char *) "PATH_INFO=\"\"",
+		(char *) "SERVER_PROTOCOL=HTTP/1.1", 
+		(char *) "CONTENT_TYPE=",
+		(char *) "CONTENT_LENGTH=",
+		(char *) "HTTP_COOKIE=",
+		(char *) "HTTP_USER_AGENT=",
+		(char *) "QUERY_STRING=",
+		(char *) "REMOTE_ADDR=",
+		(char *) "REMOTE_HOST=",
+		(char *) "SCRIPT_FILENAME=",
+		(char *) "SCRIPT_NAME=",
+		(char *) "SERVER_NAME=",
+		(char *) "SERVER_SOFTWARE=",
+		NULL
+	};
 
 	int fd[2];
 	if (pipe(fd))
@@ -34,7 +61,7 @@ std::string CgiExecutor::execute()
 		close(fd[STDIN_FILENO]);
 		dup2(fd[STDOUT_FILENO], STDOUT_FILENO);
 		close(fd[STDOUT_FILENO]);
-		execvpe(_path.c_str(), argv, envp);
+		execve(_path.c_str(), argv, envp);
 		std::cout << "oups..." << std::endl;
 		perror("execvpe: ");
 		exit(1);
