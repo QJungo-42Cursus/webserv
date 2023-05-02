@@ -1,9 +1,9 @@
 NAME =     		webserv
 CC =			c++
 RM =			rm -f
-CFLAGS =		-Wall -Wextra -Werror -std=c++98 -I ./http/
+CFLAGS =		-std=c++98 -I ./http/
 OBJS =			$(SRCS:.cpp=.o)
-SRCS =			src/main.cpp \
+SRCS =			src/othermain.cpp \
 				src/config/Config.cpp \
 				src/server/Server.cpp \
 				src/server/ResponseHeader.cpp \
