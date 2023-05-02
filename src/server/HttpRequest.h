@@ -4,8 +4,6 @@
 #include <map>
 #include <string>
 
-enum HttpMethod { GET, POST, DELETE, UNKNOWN };
-
 class HttpRequest {
 public:
     HttpRequest(const std::string& raw_request);
