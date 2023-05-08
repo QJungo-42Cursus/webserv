@@ -23,8 +23,8 @@ public:
 
 	Option<std::string> server_name;
 	Option<int> port;
-	Option<std::string> client_max_body_size;
-	Option<short> methods;
+	Option<std::string> client_max_body_size; // if none : default max size
+	Option<short> methods; // enlever, ca ne sert a rien a ce niveau
 	std::map<int, std::string> error_pages;
 	std::map<std::string, Route *> routes;
 private:

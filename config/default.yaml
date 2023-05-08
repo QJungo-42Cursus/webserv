@@ -5,7 +5,6 @@ servers: # liste de serveurs
       error_pages: # liste des pages d'erreur par defaut (optionnel)
         - 404: ./404.html
       client_max_body_size: 10m # taille max des requetes en megaoctets (optionnel, default: 1m TODO: 1m ?)
-      methods: GET POST DELETE # methodes autorisees par le server (optionnel, default: GET)
       routes: # liste des routes du serveur (optionnel ?)
         - /:
             methods: GET # methodes autorisees par la route (optionnel, default: GET)
