@@ -1,26 +1,28 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.cpp                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
+/*   Updated: 2023/05/08 17:09:45 by tplanes          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "webserv.hpp"
-#include <cstdlib>
 
 static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
 static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[]);
-#include <iostream>
-#include <unistd.h>
-#include "server/HttpResponse.h"
-#include "server/HttpRequest.h"
-#include "server/RequestHandler.h"
-#include <poll.h>
-#include <errno.h>
-#include <string.h>
-#include "http/http.h"
 
-static void		handleSocketError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[]);
+static void		handleSockError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[]);
 
 static void		readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[]);
 
 static void		writeSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[]);
 
-static void		processRequest(Client* client); // to be overridden by proper HTTP request handler
+static void	processRequest(Client* client);
 
 static std::string	getHelloMsg(void); //tmp minimal HTTP response
 
@@ -29,7 +31,57 @@ static std::string	getIndexHtml(void); //tmp minimal HTTP response from index.ht
 static std::string	getBadRequest(void); //tmp minimal 400 Error response
 
 
-static void	handleSocketError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[])
+//#include "server/HttpRequest.h"
+//#include "server/HttpResponse.h"
+int main(void)
+{
+	int				listenSockFd; //, connectSockFd;
+	t_fdSets		fdSets; // Struct with the sets of FDs to be monit. with select
+	struct timeval	timeOut; // Max time for select to return if no socket has updates
+
+	listenSockFd = getListenSock();
+	FD_ZERO(&fdSets.main); // make sure it's empty
+	FD_SET(listenSockFd, &fdSets.main); // adds the listening sock to the set
+	fdSets.fdMax = listenSockFd;
+
+	timeOut.tv_sec = 5;
+	timeOut.tv_usec = 0;
+
+	Client* clientArray[FD_SETSIZE] = {};
+
+	std::cout << "Server: ready, waiting for connections..." << std::endl;
+	
+	// Main loop
+	while (true)
+	{
+		// Poll sokets with select
+		// if (pollSockets(&fdSets, &timeOut) == 0)
+		(void)timeOut;
+		if (pollSockets(&fdSets, NULL) == 0)
+		{
+			std::cout << "Timeout while polling sockets with select..." << std::endl;
+			continue ;
+		}
+		
+		// Check sockets for errors or read/write readyness
+		for (int fd = 0; fd <= fdSets.fdMax; fd++)
+ 		{
+			if (FD_ISSET(fd, &fdSets.error))
+				handleSockError(fd, listenSockFd, &fdSets.main, clientArray);
+			else if (FD_ISSET(fd, &fdSets.read))
+				readSocket(fd, listenSockFd, &fdSets, clientArray);
+			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
+			{	
+				if (clientArray[fd]->getFlagResponse() == false)
+					continue ;
+				writeSocket(fd, listenSockFd, &fdSets, clientArray);
+			}
+		}
+	}
+	return (0);
+}
+
+static void	handleSockError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[])
 {
 	if (fd == listenSockFd)
 
@@ -104,8 +156,9 @@ static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clie
 	int		connectSockFd;
 
 	// Will fill client addr info and create new socket for communication
+	// should check what happens when overpass FD max number
 	connectSockFd = accept(listenSockFd,
-		tmpClient->getAddr(), tmpClient->getAddrSize()); // should check what happens when overpass FD max number
+		tmpClient->getAddr(), tmpClient->getAddrSize());
 
 	if (connectSockFd == -1)
 	{
@@ -144,32 +197,53 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 	return (selectRetVal);
 }
 
-#include "server/HttpRequest.h"
-#include "server/HttpResponse.h"
-
-static void	processRequest(Client* client) // to be overridden by proper HTTP request handler
+static void	processRequest(Client* client)
 {
 	client->setFlagResponse(true);
-
+	client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
+	
+	// Create a new response
+	HttpResponse response;
+	
 	if (client->getNBytesRequest() >= BUFFSIZE)
-	{
-		client->setResponse(getBadRequest());
-		client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
-	}
-	//else if (strncmp(client->getRequestBuff(), "GET /index.html", 15) == 0) //to replace with proper parser
-	//	client->setResponse(getIndexHtml());
-	//else if (strncmp(client->getRequestBuff(), "GET", 3) == 0) //to replace with proper parser
-	//	client->setResponse(getHelloMsg());
+		response.set_status(400, "Bad Request: too big.");
 	else 
 	{
-				//std::string request();
-				HttpRequest req(client->getRequestBuff());
-				// TODO execution
-				// client->setResponse();
+		std::string rawRequest(client->getRequestBuff());
+		HttpRequest request(rawRequest);
+
+		if (request.get_method() == Http::Methods::GET) 
+		{
+			GetRequestHandler get_handler(config);
+			response = get_handler.handle_request(request);
+		}
+		else if (request.get_method() == Http::Methods::POST)
+		{
+			PostRequestHandler post_handler(config);
+			response = post_handler.handle_request(request);
+		}
+		else if (request.get_method() == Http::Methods::DELETE)
+		{
+			DeleteRequestHandler delete_handler(config);
+			response = delete_handler.handle_request(request);
+		} 
+		else
+		{
+			response.set_version(request.get_version());
+			response.set_status(405, "Method Not Allowed");
+		}
+
 	}
-	//	client->setResponse(getBadRequest());
-	
+	client->setResponse(response.to_string());
 	client->clearRequestBuff();
+	
+	/*else if (strncmp(client->getRequestBuff(), "GET /index.html", 15) == 0) //to replace with proper parser
+		client->setResponse(getIndexHtml());
+	else if (strncmp(client->getRequestBuff(), "GET", 3) == 0) //to replace with proper parser
+		client->setResponse(getHelloMsg());
+	else
+		client->setResponse(getBadRequest());
+	*/
 	return ;
 }
 
@@ -216,53 +290,4 @@ static std::string	getBadRequest(void) //tmp minimal 400 Error response
 		<< msg;
 
 	return (ss.str());
-}
-
-
-int main(void)
-{
-	int				listenSockFd; //, connectSockFd;
-	t_fdSets		fdSets; // Struct with the sets of FDs to be monit. with select
-	struct timeval	timeOut; // Max time for select to return if no socket has updates
-
-	listenSockFd = getListenSock();
-	FD_ZERO(&fdSets.main); // make sure it's empty
-	FD_SET(listenSockFd, &fdSets.main); // adds the listening sock to the set
-	fdSets.fdMax = listenSockFd;
-
-	timeOut.tv_sec = 5;
-	timeOut.tv_usec = 0;
-
-	Client* clientArray[FD_SETSIZE] = {};
-
-	std::cout << "Server: ready, waiting for connections..." << std::endl;
-	
-	// Main loop
-	while (true)
-	{
-		// Poll sokets with select
-		// if (pollSockets(&fdSets, &timeOut) == 0)
-		(void)timeOut;
-		if (pollSockets(&fdSets, NULL) == 0)
-		{
-			std::cout << "Timeout while polling sockets with select..." << std::endl;
-			continue ;
-		}
-		
-		// Check sockets for errors or read/write readyness
-		for (int fd = 0; fd <= fdSets.fdMax; fd++) // check all other sockets
- 		{
-			if (FD_ISSET(fd, &fdSets.error))
-				handleSocketError(fd, listenSockFd, &fdSets.main, clientArray);
-			else if (FD_ISSET(fd, &fdSets.read))
-				readSocket(fd, listenSockFd, &fdSets, clientArray);
-			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
-			{	
-				if (clientArray[fd]->getFlagResponse() == false)
-					continue ;
-				writeSocket(fd, listenSockFd, &fdSets, clientArray);
-			}
-		}
-	}
-	return (0);
 }
