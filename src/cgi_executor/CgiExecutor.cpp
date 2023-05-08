@@ -100,6 +100,7 @@ std::string CgiExecutor::execute()
 	}
 	if (did_timeout)
 	{
+		// TODO kill le process
 		std::cout << "TIMEOUT !! (the waitpid on the lauched CGI wait for too long)" << std::endl;
 		return "";
 	}
