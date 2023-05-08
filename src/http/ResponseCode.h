@@ -13,6 +13,8 @@ namespace Http
 			NOT_ALLOWED = 405,
 			NOT_IMPLEMENTED = 501,
 			INTERNAL_SERVER_ERROR = 500,
+			HTTP_VERSION_UNSUPPORTED = 505,
+			
 			/* TODO */
 		};
 	}

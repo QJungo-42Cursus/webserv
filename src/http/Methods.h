@@ -6,14 +6,15 @@ namespace Http
 	{
 		enum EMethods
 		{
-			GET,
-			POST,
+			GET = 0b0001,
+			POST = 0b0010,
+			DELETE = 0b0100,
 			PUT,
-			DELETE,
 			HEAD,
 			OPTIONS,
 			TRACE,
-			CONNECT
+			CONNECT,
+			UNKNOWN
 		};
 	}
 }

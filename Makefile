@@ -1,16 +1,18 @@
 NAME =     		webserv
 CC =			c++
 RM =			rm -f
-CFLAGS =		-Wall -Wextra -Werror -std=c++98
+CFLAGS =		-std=c++98 -I ./http/
 OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \
+				src/config/CgiConfig.cpp \
 				src/config/Config.cpp \
-				src/server/Server.cpp \
-				src/server/ResponseHeader.cpp \
-				src/server/RequestHeader.cpp \
-				src/server/Socket.cpp \
-				src/server/PollFdWrapper.cpp \
-				src/cgi_executor/CgiExecutor.cpp
+				src/config/Route.cpp \
+				src/config/yaml_helper.cpp \
+				src/utils/split.cpp \
+				src/server/HttpRequest.cpp \
+				src/server/HttpResponse.cpp \
+				src/server/Client.cpp \
+				src/server/listenerSocket.cpp
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -33,7 +35,7 @@ re: fclean all
 ################## TESTS ##################
 
 t: all
-	./$(NAME)
+	@./$(NAME)
 
 py: all
 	./$(NAME) & python3 tests/client.py

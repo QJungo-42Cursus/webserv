@@ -1,0 +1,51 @@
+servers: # liste de serveurs
+  - server: # un serveur
+        server_name: domain1.com # nom du serveur (optionnel)
+      port: 8080 # port du serveur (optionnel, default: 80)
+      error_pages: # liste des pages d'erreur par defaut (optionnel)
+        - 404: ./404.html
+      client_max_body_size: 10m # taille max des requetes en megaoctets (optionnel, default: 1m TODO: 1m ?)
+
+
+
+      methods: GET POST DELETE # methodes autorisees par le server (optionnel, default: GET)
+      routes: # liste des routes du serveur (optionnel ?)
+        - /:
+            methods: GET # methodes autorisees par la route (optionnel, default: GET)
+            redirection: /404.html # redirection de la route (optionnel)
+
+
+            root: PWD/www/ # racine de la route (optionnel, default: PWD/www/ + url)
+            repertory_listing: false # autorise le listing des repertoires (optionnel, default: false)
+            index: index.html # page index (optionnel, default: index.html)
+        - /new_user:
+
+            cgi: .php PWD/cgi-bin/ # cgi 'extension' 'racine du cgi' (optionnel)
+            methods: POST
+        - /uploader:
+            methods: POST
+            upload: PWD/www/files/ # racine du telechargement, active l'upload de fichier (optionnel)
+
+        - /admin/:
+            methods: GET POST
+
+
+            root: PWD/www/admin/
+
+            repertory_listing: true
+        - /get_user:
+            methods: GET
+
+
+            cgi: .php PWD/cgi-bin/
+
+
+
+
+  - server:
+      server_name: domain2.com
+      port: 8080
+
+  - server:
+      server_name: domain2.com
+      port: 8080
