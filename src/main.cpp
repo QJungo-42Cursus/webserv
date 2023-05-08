@@ -30,11 +30,42 @@ static std::string	getIndexHtml(void); //tmp minimal HTTP response from index.ht
 
 static std::string	getBadRequest(void); //tmp minimal 400 Error response
 
+#define DEFAULT_CONFIG_FILE_PATH "./config/default.yaml"
 
 //#include "server/HttpRequest.h"
 //#include "server/HttpResponse.h"
-int main(void)
+int main(int argc, char **argv)
 {
+
+    if (argc > 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " [path/to/file.conf]" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    std::vector<Config *> configs;
+    try
+    {
+        configs = argc == 1 ? Config::parse_servers(DEFAULT_CONFIG_FILE_PATH) : Config::parse_servers(argv[1]);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "starting webserv with " << configs.size() << " server(s) : " << std::endl;
+    for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
+    {
+        std::cout << "====================" << std::endl;
+        (*it)->log();
+        std::cout << std::endl;
+    }
+
+    // configs[0];
+
+
+
+
 	int				listenSockFd; //, connectSockFd;
 	t_fdSets		fdSets; // Struct with the sets of FDs to be monit. with select
 	struct timeval	timeOut; // Max time for select to return if no socket has updates
