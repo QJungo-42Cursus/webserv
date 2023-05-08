@@ -179,6 +179,11 @@ std::map<std::string, std::string> get_env(const HttpRequest &request)
 
 std::string CgiExecutor::execute(const HttpRequest &request, const Config &config)
 {
+    // log request _headers
+
+    for (std::map<std::string, std::string>::iterator it = request.get_headers().begin(); it != request.get_headers().end(); it++)
+        std::cout << it->first << ": " << it->second << std::endl;
+
     std::map<std::string, std::string> env = get_env(request);
     for (std::map<std::string, std::string>::iterator it = env.begin(); it != env.end(); ++it)
     {

@@ -13,5 +13,6 @@ int main()
 //    servers[0]->log();
     HttpRequest request("GET / HTTP/1.1\r\nHost: localhost:8080\r\nUser-Agent: curl/7.68.0\r\nAccept: */*\r\n\r\n");
     CgiExecutor cgi_executor;
-    std::cout << cgi_executor.execute(request, *servers[0]) << std::endl;
+    std::string res = cgi_executor.execute(request, *servers[0]);
+    std::cout << res << std::endl;
 }
