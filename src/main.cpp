@@ -134,6 +134,9 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 	return (selectRetVal);
 }
 
+#include "HttpRequest.h"
+#include "HttpResponse.h"
+
 static void	processRequest(Client* client) // to be overridden by proper HTTP request handler
 {
 	client->setFlagResponse(true);
@@ -143,12 +146,18 @@ static void	processRequest(Client* client) // to be overridden by proper HTTP re
 		client->setResponse(getBadRequest());
 		client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
 	}
-	else if (strncmp(client->getRequestBuff(), "GET /index.html", 15) == 0) //to replace with proper parser
-		client->setResponse(getIndexHtml());
-	else if (strncmp(client->getRequestBuff(), "GET", 3) == 0) //to replace with proper parser
-		client->setResponse(getHelloMsg());
+	//else if (strncmp(client->getRequestBuff(), "GET /index.html", 15) == 0) //to replace with proper parser
+	//	client->setResponse(getIndexHtml());
+	//else if (strncmp(client->getRequestBuff(), "GET", 3) == 0) //to replace with proper parser
+	//	client->setResponse(getHelloMsg());
 	else 
-		client->setResponse(getBadRequest());
+	{
+				//std::string request();
+				HttpRequest req(client->getRequestBuff());
+				// TODO execution
+				// client->setResponse();
+	}
+	//	client->setResponse(getBadRequest());
 	
 	client->clearRequestBuff();
 	return ;
