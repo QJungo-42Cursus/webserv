@@ -6,23 +6,24 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/08 17:09:45 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/08 17:56:29 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "webserv.hpp"
 
+# include "server/RequestHandler.h"
 static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
 static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[]);
 
 static void		handleSockError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[]);
 
-static void		readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[]);
+static void		readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[], Config* config);
 
 static void		writeSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[]);
 
-static void	processRequest(Client* client);
+static void	processRequest(Client* client, Config *config);
 
 static std::string	getHelloMsg(void); //tmp minimal HTTP response
 
@@ -61,11 +62,6 @@ int main(int argc, char **argv)
         std::cout << std::endl;
     }
 
-    // configs[0];
-
-
-
-
 	int				listenSockFd; //, connectSockFd;
 	t_fdSets		fdSets; // Struct with the sets of FDs to be monit. with select
 	struct timeval	timeOut; // Max time for select to return if no socket has updates
@@ -100,7 +96,7 @@ int main(int argc, char **argv)
 			if (FD_ISSET(fd, &fdSets.error))
 				handleSockError(fd, listenSockFd, &fdSets.main, clientArray);
 			else if (FD_ISSET(fd, &fdSets.read))
-				readSocket(fd, listenSockFd, &fdSets, clientArray);
+				readSocket(fd, listenSockFd, &fdSets, clientArray, configs[0]);
 			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
 			{	
 				if (clientArray[fd]->getFlagResponse() == false)
@@ -130,7 +126,7 @@ static void	handleSockError(int fd, int listenSockFd, fd_set* mainFdSet, Client*
 	return ;
 }
 
-static void	readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[])
+static void	readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[], Config *config)
 {
 
 	if (fd == listenSockFd)
@@ -154,7 +150,7 @@ static void	readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clien
 	}
 	clientArray[fd]->setNBytesRequest(nBytesRead);
 	std::cout << clientArray[fd]->getRequestBuff() << std::endl; // tmp
-	processRequest(clientArray[fd]);
+	processRequest(clientArray[fd], config);
 	return ;
 }
 
@@ -228,7 +224,7 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 	return (selectRetVal);
 }
 
-static void	processRequest(Client* client)
+static void	processRequest(Client* client, Config *config)
 {
 	client->setFlagResponse(true);
 	client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
