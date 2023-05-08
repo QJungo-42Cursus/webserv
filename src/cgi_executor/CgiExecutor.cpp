@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <sys/wait.h>
 #include "CgiExecutor.h"
+#include "../config/Config.h"
 #include <cstdlib>
 #include <unistd.h>
 #include <ctime>
@@ -18,7 +19,7 @@ int fork1()
 }
 
 
-std::string CgiExecutor::execute()
+std::string test()
 {
 	#ifdef __LINUX__
 	std::string _path = "cgi/ubuntu_cgi_tester";
@@ -126,9 +127,8 @@ std::string CgiExecutor::execute()
 	return "";
 }
 
-void CgiExecutor::execute(const HttpRequest &request, HttpResponse &response)
-{
-}
+
+
 std::map<std::string, std::string> get_env(const HttpRequest &request)
 {
 	std::map<std::string, std::string> env;
@@ -175,4 +175,15 @@ std::map<std::string, std::string> get_env(const HttpRequest &request)
 		env["HTTP_HOST"] = request.get_headers().find("http-host")->second;
 	// TODO check if we need to add more headers, or if some are not existing
 	return env;
+}
+
+std::string CgiExecutor::execute(const HttpRequest &request, const Config &config)
+{
+    std::map<std::string, std::string> env = get_env(request);
+    for (std::map<std::string, std::string>::iterator it = env.begin(); it != env.end(); ++it)
+    {
+        std::cout << it->first << ": " << it->second << std::endl;
+    }
+
+    return "";
 }

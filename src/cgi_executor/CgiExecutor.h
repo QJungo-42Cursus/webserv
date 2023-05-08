@@ -4,11 +4,12 @@
 #include <string>
 #include "../server/HttpRequest.h"
 #include "../server/HttpResponse.h"
+#include "../config/Config.h"
 
 class CgiExecutor
 {
 public:
-	void execute(const HttpRequest& request, HttpResponse& response);
+	std::string execute(const HttpRequest& request, const Config& config);
 };
 
 #endif //CGIEXECUTOR_H
