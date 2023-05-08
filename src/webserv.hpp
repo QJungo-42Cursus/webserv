@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tplanes <tplanes@student.42.fr>            +#+  +:+       +#+        */
+/*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:23:23 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/07 16:24:02 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/08 13:45:16 by qjungo           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@
 
 //# define FD_SETSIZE 1024 // how to overide the default higher value? (should test what happens if pass limit)
 
-# include "Client.hpp"
+# include "server/Client.hpp"
 
 /* Functions ***************************************************/
 

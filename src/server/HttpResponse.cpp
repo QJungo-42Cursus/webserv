@@ -29,5 +29,6 @@ std::string HttpResponse::to_string() const {
 
 void HttpResponse::set_body(const std::string& body) {
     body_ = body;
-    headers_["Content-Length"] = std::to_string(body_.size());
+    // TODO version C98
+    // headers_["Content-Length"] = std::to_string(body_.size());
 }

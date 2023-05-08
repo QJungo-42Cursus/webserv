@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tplanes <tplanes@student.42.fr>            +#+  +:+       +#+        */
+/*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:55:07 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/07 13:14:37 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/08 13:45:42 by qjungo           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CLIENT_H
 # define CLIENT_H
 
-#include "webserv.hpp"
+#include "../webserv.hpp"
 
 class Client
 {
