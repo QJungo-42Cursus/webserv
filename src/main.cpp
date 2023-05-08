@@ -4,6 +4,19 @@
 static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
 static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[]);
+#include <iostream>
+#include <unistd.h>
+#include "server/PollFdWrapper.h"
+#include "server/ResponseHeader.h"
+#include "server/RequestHeader.h"
+#include "server/HttpResponse.h"
+#include "server/HttpRequest.h"
+#include "server/RequestHandler.h"
+#include "server/Socket.h"
+#include <poll.h>
+#include <errno.h>
+#include <string.h>
+#include "http/http.h"
 
 static void		handleSocketError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[]);
 
@@ -23,6 +36,7 @@ static std::string	getBadRequest(void); //tmp minimal 400 Error response
 static void	handleSocketError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[])
 {
 	if (fd == listenSockFd)
+
 	{
 		std::cout << "Error on listening socket, server will reboot in 5s..."
 			<< std::endl;

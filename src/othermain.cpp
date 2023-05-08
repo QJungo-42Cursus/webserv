@@ -11,10 +11,19 @@
 #include "server/HttpRequest.h"
 #include "server/RequestHandler.h"
 #include "server/Socket.h"
-
+#include "Config.h"
+#define DEFAULT_CONFIG_FILE_PATH "./config/default.yaml"
 #define PORT 8080
+
 int main(void)
 {
+  // Load the configuration from a YAML file
+    std::string config_file_path = "./config/default.yaml";
+    std::vector<Config*> configs = Config::parse_servers(config_file_path);
+    
+    // Assume that we are using the first config in the vector
+    Config* config = configs[0];
+    config->log();
     int server_fd, new_socket; long valread;
     struct sockaddr_in address;
     int addrlen = sizeof(address);
@@ -60,31 +69,27 @@ int main(void)
         printf("Buffer: %s\n",buffer );
         std::string raw_request(buffer);
         HttpRequest request(raw_request);
+        // Create a new response
+        HttpResponse response;
 
-		 RequestHandler* handler = NULL;
-    switch (request.get_method()) {
-        case Http::Methods::GET:
-            handler = new GetRequestHandler();
-            break;
-        case Http::Methods::POST:
-            handler = new PostRequestHandler();
-            break;
-        case Http::Methods::DELETE:
-            handler = new DeleteRequestHandler();
-            break;
-        default:
-            std::cout << "Unsupported HTTP method" << std::endl;
-			break;
+    if (request.get_method() == Http::Methods::GET) {
+        GetRequestHandler get_handler(config);
+        response = get_handler.handle_request(request);
+    } else if (request.get_method() == Http::Methods::POST) {
+        PostRequestHandler post_handler(config);
+        response = post_handler.handle_request(request);
+    } else if (request.get_method() == Http::Methods::DELETE) {
+        DeleteRequestHandler delete_handler(config);
+        response = delete_handler.handle_request(request);
+    } else {
+        response.set_version(request.get_version());
+        response.set_status(405, "Method Not Allowed");
     }
-
-    // Handle the request and obtain the HttpResponse
-    HttpResponse response = handler->handle_request(request);
-
-    // Delete the handler instance
-    delete handler;
 
     // Convert the HttpResponse back to a string
     std::string response_str = response.to_string();
+    std::cout << "Response:" << std::endl;
+    std::cout << response_str << std::endl;
     hello = response_str.c_str();
     write(new_socket , hello , strlen(hello));
     close(new_socket);

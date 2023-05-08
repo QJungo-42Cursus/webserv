@@ -1,10 +1,11 @@
 NAME =     		webserv
 CC =			c++
 RM =			rm -f
-CFLAGS =		-Wall -Wextra -Werror -std=c++98 -I ./http/
+CFLAGS =		-std=c++98 -I ./http/
 OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \
 				src/config/CgiConfig.cpp \
+SRCS =			src/othermain.cpp \
 				src/config/Config.cpp \
 				src/config/Route.cpp \
 				src/config/yaml_helper.cpp \

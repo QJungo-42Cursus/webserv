@@ -1,22 +1,27 @@
-#ifndef HTTPRESPONSE_H
-#define HTTPRESPONSE_H
+#ifndef HTTP_RESPONSE_H
+#define HTTP_RESPONSE_H
 
-#include <map>
 #include <string>
+#include <map>
 
 class HttpResponse {
 public:
-    HttpResponse(int status_code, const std::string& reason_phrase,
-                 const std::map<std::string, std::string>& headers, const std::string& body);
+    HttpResponse();
 
-    std::string to_string() const;
+    void set_version(const std::string& version);
+    void set_status(int status_code, const std::string& status_description);
+    void add_header(const std::string& header_name, const std::string& header_value);
     void set_body(const std::string& body);
 
+    std::string to_string() const;
+
 private:
-    int status_code_;
-    std::string reason_phrase_;
-    std::map<std::string, std::string> headers_;
-    std::string body_;
+    std::string _version;
+    int _status_code;
+    std::string _status_description;
+    std::map<std::string, std::string> _headers;
+    std::string _body;
 };
 
-#endif
+#endif // HTTP_RESPONSE_H
+
