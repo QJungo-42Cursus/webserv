@@ -5,14 +5,9 @@ CFLAGS =		-std=c++98 -I ./http/
 OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \
 				src/config/CgiConfig.cpp \
-SRCS =			src/othermain.cpp \
 				src/config/Config.cpp \
 				src/config/Route.cpp \
 				src/config/yaml_helper.cpp \
-				src/server/ResponseHeader.cpp \
-				src/server/RequestHeader.cpp \
-				src/server/Socket.cpp \
-				src/server/PollFdWrapper.cpp \
 				src/utils/split.cpp \
 				src/server/HttpRequest.cpp \
 				src/server/HttpResponse.cpp \

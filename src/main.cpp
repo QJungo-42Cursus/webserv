@@ -6,13 +6,9 @@ static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[]);
 #include <iostream>
 #include <unistd.h>
-#include "server/PollFdWrapper.h"
-#include "server/ResponseHeader.h"
-#include "server/RequestHeader.h"
 #include "server/HttpResponse.h"
 #include "server/HttpRequest.h"
 #include "server/RequestHandler.h"
-#include "server/Socket.h"
 #include <poll.h>
 #include <errno.h>
 #include <string.h>
@@ -148,8 +144,8 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 	return (selectRetVal);
 }
 
-#include "HttpRequest.h"
-#include "HttpResponse.h"
+#include "server/HttpRequest.h"
+#include "server/HttpResponse.h"
 
 static void	processRequest(Client* client) // to be overridden by proper HTTP request handler
 {
