@@ -2,12 +2,13 @@
 #define CGIEXECUTOR_H
 
 #include <string>
+#include "../server/HttpRequest.h"
+#include "../server/HttpResponse.h"
 
 class CgiExecutor
 {
 public:
-	std::string execute();
+	void execute(const HttpRequest& request, HttpResponse& response);
 };
-
 
 #endif //CGIEXECUTOR_H

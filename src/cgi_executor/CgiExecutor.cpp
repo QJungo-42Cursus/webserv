@@ -125,3 +125,54 @@ std::string CgiExecutor::execute()
 	close(fd_std[STDIN_FILENO]);
 	return "";
 }
+
+void CgiExecutor::execute(const HttpRequest &request, HttpResponse &response)
+{
+}
+std::map<std::string, std::string> get_env(const HttpRequest &request)
+{
+	std::map<std::string, std::string> env;
+
+	if (request.get_headers().count("content-type"))
+		env["CONTENT_TYPE"] = request.get_headers().find("content-type")->second;
+	if (request.get_headers().count("content-length"))
+		env["CONTENT_LENGTH"] = request.get_headers().find("content-length")->second;
+	if (request.get_headers().count("cookie"))
+		env["HTTP_COOKIE"] = request.get_headers().find("cookie")->second;
+	if (request.get_headers().count("user-agent"))
+		env["HTTP_USER_AGENT"] = request.get_headers().find("user-agent")->second;
+	if (request.get_headers().count("query-string"))
+		env["QUERY_STRING"] = request.get_headers().find("query-string")->second;
+	if (request.get_headers().count("remote-addr"))
+		env["REMOTE_ADDR"] = request.get_headers().find("remote-addr")->second;
+	if (request.get_headers().count("remote-host"))
+		env["REMOTE_HOST"] = request.get_headers().find("remote-host")->second;
+	if (request.get_headers().count("script-filename"))
+		env["SCRIPT_FILENAME"] = request.get_headers().find("script-filename")->second;
+	if (request.get_headers().count("script-name"))
+		env["SCRIPT_NAME"] = request.get_headers().find("script-name")->second;
+	if (request.get_headers().count("server-name"))
+		env["SERVER_NAME"] = request.get_headers().find("server-name")->second;
+	if (request.get_headers().count("server-software"))
+		env["SERVER_SOFTWARE"] = request.get_headers().find("server-software")->second;
+	if (request.get_headers().count("request-method"))
+		env["REQUEST_METHOD"] = request.get_headers().find("request-method")->second;
+	if (request.get_headers().count("path-info"))
+		env["PATH_INFO"] = request.get_headers().find("path-info")->second;
+	if (request.get_headers().count("server-protocol"))
+		env["SERVER_PROTOCOL"] = request.get_headers().find("server-protocol")->second;
+	if (request.get_headers().count("http-accept"))
+		env["HTTP_ACCEPT"] = request.get_headers().find("http-accept")->second;
+	if (request.get_headers().count("http-accept-charset"))
+		env["HTTP_ACCEPT_CHARSET"] = request.get_headers().find("http-accept-charset")->second;
+	if (request.get_headers().count("http-accept-encoding"))
+		env["HTTP_ACCEPT_ENCODING"] = request.get_headers().find("http-accept-encoding")->second;
+	if (request.get_headers().count("http-accept-language"))
+		env["HTTP_ACCEPT_LANGUAGE"] = request.get_headers().find("http-accept-language")->second;
+	if (request.get_headers().count("http-connection"))
+		env["HTTP_CONNECTION"] = request.get_headers().find("http-connection")->second;
+	if (request.get_headers().count("http-host"))
+		env["HTTP_HOST"] = request.get_headers().find("http-host")->second;
+	// TODO check if we need to add more headers, or if some are not existing
+	return env;
+}
