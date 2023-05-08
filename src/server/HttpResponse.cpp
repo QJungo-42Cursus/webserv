@@ -1,33 +1,37 @@
 #include "HttpResponse.h"
 #include <sstream>
 
-HttpResponse::HttpResponse(int status_code, const std::string& reason_phrase,
-                           const std::map<std::string, std::string>& headers, const std::string& body)
-    : status_code_(status_code), reason_phrase_(reason_phrase), headers_(headers) {
-    set_body(body);
+HttpResponse::HttpResponse() : _status_code(200), _status_description("OK") {}
+
+void HttpResponse::set_version(const std::string& version) {
+    _version = version;
+}
+
+void HttpResponse::set_status(int status_code, const std::string& status_description) {
+    _status_code = status_code;
+    _status_description = status_description;
+}
+
+void HttpResponse::add_header(const std::string& header_name, const std::string& header_value) {
+    _headers[header_name] = header_value;
+}
+
+void HttpResponse::set_body(const std::string& body) {
+    _body = body;
 }
 
 std::string HttpResponse::to_string() const {
     std::ostringstream response_stream;
 
-    // Add status line
-    response_stream << "HTTP/1.1 " << status_code_ << " " << reason_phrase_ << "\r\n";
+    response_stream << _version << " " << _status_code << " " << _status_description << "\r\n";
 
-    // Add headers
-    for (std::map<std::string, std::string>::const_iterator it = headers_.begin(); it != headers_.end(); ++it) {
+    for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it) {
         response_stream << it->first << ": " << it->second << "\r\n";
     }
 
-    // Add a blank line to separate headers and body
-    response_stream << "\r\n";
-
-    // Add body
-    response_stream << body_;
+    response_stream << "Content-Length: " << _body.size() << "\r\n\r\n";
+    response_stream << _body;
 
     return response_stream.str();
 }
 
-void HttpResponse::set_body(const std::string& body) {
-    body_ = body;
-    headers_["Content-Length"] = std::to_string(body_.size());
-}

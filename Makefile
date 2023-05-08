@@ -3,16 +3,17 @@ CC =			c++
 RM =			rm -f
 CFLAGS =		-std=c++98 -I ./http/
 OBJS =			$(SRCS:.cpp=.o)
+SRCS =			src/main.cpp \
+				src/config/CgiConfig.cpp \
 SRCS =			src/othermain.cpp \
 				src/config/Config.cpp \
+				src/config/Route.cpp \
+				src/config/yaml_helper.cpp \
 				src/server/Server.cpp \
 				src/server/ResponseHeader.cpp \
 				src/server/RequestHeader.cpp \
 				src/server/Socket.cpp \
 				src/server/PollFdWrapper.cpp \
-				src/server/HttpRequest.cpp \
-				src/server/HttpResponse.cpp \
-				src/server/RequestHandler.cpp
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -35,7 +36,7 @@ re: fclean all
 ################## TESTS ##################
 
 t: all
-	./$(NAME)
+	@./$(NAME)
 
 py: all
 	./$(NAME) & python3 tests/client.py

@@ -3,6 +3,28 @@
 #include <fstream>
 #include <sstream>
 
+RequestHandler::RequestHandler(const Config* config) : config_(config) {}
+
+Route* RequestHandler::find_route(const std::string& requested_path) const{
+    std::map<std::string, Route*>::const_iterator it;
+    for (it = config_->routes.begin(); it != config_->routes.end(); ++it) {
+        if (requested_path.find(it->first) == 0) {
+            return it->second;
+        }
+    }
+    return 0;
+}
+
+
+bool RequestHandler::is_method_allowed(const Route* route, const HttpRequest& request) {
+    if (route == nullptr || route->methods.isNone()) {
+        return false;
+    }
+
+    short allowed_methods = route->methods.unwrap();
+    return (allowed_methods & request.get_method()) != 0;
+}
+
 std::string get_content_type(const std::string& path) {
     std::string::size_type idx = path.rfind('.');
     if (idx != std::string::npos) {
@@ -14,66 +36,109 @@ std::string get_content_type(const std::string& path) {
     return "text/plain";
 }
 
-HttpResponse GetRequestHandler::handle_request(const HttpRequest& request) {
-    // Handle GET request
-    std::string path = "website" + request.get_path();
-    std::string file_content;
-    std::string content_type;
+GetRequestHandler::GetRequestHandler(const Config* config) : RequestHandler(config) {}
 
-    // Check if the requested file exists
-    std::ifstream requested_file(path.c_str());
-    if (requested_file.is_open() && path != "website/") {
-        // Read the requested file content
-        std::stringstream file_stream;
-        file_stream << requested_file.rdbuf();
-        file_content = file_stream.str();
-        requested_file.close();
-        content_type = get_content_type(path);
-    } else {
-        // Open the default file if the requested file doesn't exist
-        std::ifstream default_file("website/default.html");
-        if (default_file.is_open()) {
-            std::stringstream file_stream;
-            file_stream << default_file.rdbuf();
-            file_content = file_stream.str();
-            default_file.close();
-            content_type = get_content_type("website/default.html");
-        } else {
-            file_content = "Error: Default file not found.";
-            content_type = "text/plain";
-        }
+HttpResponse GetRequestHandler::handle_request(const HttpRequest& request) {
+    HttpResponse response;
+    response.set_version(request.get_version());
+
+    Route* route = find_route(request.get_path());
+    if (route == nullptr) {
+        response.set_status(404, "Not Found");
+        return response;
     }
 
-    // Process GET request based on the path and any other necessary data from the request
-    std::cout << "Handling GET request for path: " << path << std::endl;
+    if (!is_method_allowed(route, request)) {
+        response.set_status(405, "Method Not Allowed");
+        return response;
+    }
 
-    // Create an HttpResponse object and return it
-    std::map<std::string, std::string> headers;
-    headers["Content-Type"] = content_type;
-    return HttpResponse(200, "OK", headers, file_content);
+    std::string file_path;
+    if (route->root.isSome()) {
+        file_path = route->root.unwrap();
+        bool is_directory = (request.get_path()[request.get_path().length() - 1] == '/');
+        bool has_extension = (request.get_path().find('.') != std::string::npos);
+
+        if (!has_extension && is_directory) {
+            if (route->index.isSome()) {
+                file_path += route->index.unwrap();
+            }
+        }
+        else
+        {
+            file_path += request.get_path();
+        }
+    } else {
+        file_path = request.get_path();
+    }
+
+    std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
+
+    if (!file) {
+        response.set_status(404, "Not Found");
+    } else {
+        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        response.set_body(content);
+        response.set_status(200, "OK");
+        response.add_header("Content-Type", get_content_type(file_path));
+    }
+
+    return response;
 }
+
+PostRequestHandler::PostRequestHandler(const Config* config) : RequestHandler(config) {}
 
 HttpResponse PostRequestHandler::handle_request(const HttpRequest& request) {
-    // Handle POST request
-    std::string path = request.get_path();
-    std::string body = request.get_body();
-    // Process POST request based on the path, body, and any other necessary data from the request
-    std::cout << "Handling POST request for path: " << path << " with body: " << body << std::endl;
+    HttpResponse response;
+    response.set_version(request.get_version());
 
-    // Create an HttpResponse object and return it
-    std::map<std::string, std::string> headers;
-    headers["Content-Type"] = "text/plain";
-    return HttpResponse(200, "OK", headers, "POST response");
+    Route* route = find_route(request.get_path());
+    if (route == nullptr) {
+        response.set_status(404, "Not Found");
+        return response;
+    }
+
+    if (!is_method_allowed(route, request)) {
+        response.set_status(405, "Method Not Allowed");
+        return response;
+    }
+
+    // Process the POST request according to your application's requirements.
+    // For example, you can save the request body to a file or a database.
+
+    response.set_status(200, "OK");
+    return response;
 }
 
-HttpResponse DeleteRequestHandler::handle_request(const HttpRequest& request) {
-    // Handle DELETE request
-    std::string path = request.get_path();
-    // Process DELETE request based on the path and any other necessary data from the request
-    std::cout << "Handling DELETE request for path: " << path << std::endl;
+DeleteRequestHandler::DeleteRequestHandler(const Config* config) : RequestHandler(config) {}
 
-    // Create an HttpResponse object and return it
-    std::map<std::string, std::string> headers;
-    headers["Content-Type"] = "text/plain";
-    return HttpResponse(200, "OK", headers, "DELETE response");
+HttpResponse DeleteRequestHandler::handle_request(const HttpRequest& request) {
+    HttpResponse response;
+    response.set_version(request.get_version());
+
+    Route* route = find_route(request.get_path());
+    if (route == nullptr) {
+        response.set_status(404, "Not Found");
+        return response;
+    }
+
+    if (!is_method_allowed(route, request)) {
+        response.set_status(405, "Method Not Allowed");
+        return response;
+    }
+
+    std::string file_path;
+    if (route->root.isSome()) {
+        file_path = route->root.unwrap() + request.get_path();
+    } else {
+        file_path = request.get_path();
+    }
+
+    if (std::remove(file_path.c_str()) != 0) {
+        response.set_status(500, "Internal Server Error");
+    } else {
+        response.set_status(200, "OK");
+    }
+
+    return response;
 }
