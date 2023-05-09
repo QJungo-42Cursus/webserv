@@ -8,6 +8,7 @@
 #include <set>
 #include <csignal>
 #include "../utils/utils.h"
+#include <unistd.h> // for getcwd on mac
 #include "yaml_helper.h"
 
 static void open_file_or_throw(std::ifstream &file, std::string filename)

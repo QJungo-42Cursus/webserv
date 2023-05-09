@@ -17,7 +17,7 @@ Route* RequestHandler::find_route(const std::string& requested_path) const{
 
 
 bool RequestHandler::is_method_allowed(const Route* route, const HttpRequest& request) {
-    if (route == nullptr || route->methods.isNone()) {
+    if (route == NULL || route->methods.isNone()) {
         return false;
     }
 
@@ -43,7 +43,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest& request) {
     response.set_version(request.get_version());
 
     Route* route = find_route(request.get_path());
-    if (route == nullptr) {
+    if (route == NULL) {
         response.set_status(404, "Not Found");
         return response;
     }
@@ -93,7 +93,7 @@ HttpResponse PostRequestHandler::handle_request(const HttpRequest& request) {
     response.set_version(request.get_version());
 
     Route* route = find_route(request.get_path());
-    if (route == nullptr) {
+    if (route == NULL) {
         response.set_status(404, "Not Found");
         return response;
     }
@@ -117,7 +117,7 @@ HttpResponse DeleteRequestHandler::handle_request(const HttpRequest& request) {
     response.set_version(request.get_version());
 
     Route* route = find_route(request.get_path());
-    if (route == nullptr) {
+    if (route == NULL) {
         response.set_status(404, "Not Found");
         return response;
     }
