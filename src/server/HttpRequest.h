@@ -13,6 +13,7 @@ public:
     std::string get_version() const;
     std::map<std::string, std::string> get_headers() const;
     std::string get_body() const;
+	void log() const;
 
 private:
     int method_;
