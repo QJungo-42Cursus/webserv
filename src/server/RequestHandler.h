@@ -15,7 +15,8 @@ protected:
 
     Route* find_route(const std::string& requested_path) const;
     bool is_method_allowed(const Route* route, const HttpRequest& request);
-
+    HttpResponse handle_error(int error_code, const std::string& error_phrase);
+    std::string create_error_html(int error_code, const std::string& error_phrase) const;
 };
 
 class GetRequestHandler : public RequestHandler {
