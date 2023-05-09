@@ -12,7 +12,8 @@ SRCS =			src/main.cpp \
 				src/server/HttpRequest.cpp \
 				src/server/HttpResponse.cpp \
 				src/server/Client.cpp \
-				src/server/listenerSocket.cpp
+				src/server/listenerSocket.cpp \
+				src/server/RequestHandler.cpp \
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
