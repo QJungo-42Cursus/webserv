@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/09 15:33:31 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/09 16:58:17 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
-static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[]);
+static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[], Config* config);
 
 static void		handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet, Client* clientArray[]);
 
@@ -22,13 +22,9 @@ static void		readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client
 
 static void		writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[]);
 
-static void	processRequest(Client* client, Config *config);
+static void		processRequest(Client* client, Config *config);
 
-static std::string	getHelloMsg(void); //tmp minimal HTTP response
-
-static std::string	getIndexHtml(void); //tmp minimal HTTP response from index.html
-
-static std::string	getBadRequest(void); //tmp minimal 400 Error response
+static std::string	getServName(Config *config);
 
 int main(int argc, char **argv)
 {
@@ -49,7 +45,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "starting webserv with " << configs.size() << " server(s) : " << std::endl;
+    std::cout << "Starting webserv with " << configs.size() << " server(s) : " << std::endl;
     for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
     {
         std::cout << "====================" << std::endl;
@@ -81,7 +77,7 @@ int main(int argc, char **argv)
 		FD_SET(listenSockFds[iServ], &fdSets.main); // adds the listening sock to the set
 		if (listenSockFds[iServ] > fdSets.fdMax)
 			fdSets.fdMax = listenSockFds[iServ];
-		std::cout << "Server " << iServ + 1 << ": ready, listening on port "
+		std::cout << "Server " << (configs[iServ]->server_name).unwrap() << ": ready, listening on port "
 			<< (configs[iServ]->port).unwrap() << std::endl;
 	}
 
@@ -117,16 +113,17 @@ int main(int argc, char **argv)
 
 static void	handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet, Client* clientArray[])
 {
-	//if (fd == listenSockFd)
-	if (configFromFd[fd]) //should add serv info in msg
+	if (configFromFd[fd]) // if fd is a listening socket
 	{
-		std::cout << "Error on listening socket, server will shutdown in 5s..."
+		std::cout << "Server " << getServName(configFromFd[fd]) 
+			<< ": error on listening socket, will shutdown in 5s..."
 			<< std::endl;
 		// should free all clients ?
 		sleep(5);
 		exit(EXIT_FAILURE); // make it reboot instead?
 	}
-	std::cout << "Error on socket " << fd << ": closing connection." << std::endl;
+	std::cout << "Server " << getServName(configFromFd[clientArray[fd]->getListenFd()]) 
+		<< ": error on socket " << fd << ": closing connection." << std::endl;
 	close(fd); // needed?
 	FD_CLR(fd, mainFdSet); // no need to update nfdmax?
 	delete clientArray[fd];
@@ -134,15 +131,24 @@ static void	handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet, C
 	return ;
 }
 
+static std::string	getServName(Config* config)
+{
+	std::stringstream	ss;
+
+	ss << config->server_name.unwrap() << " (" 
+		<< config->port.unwrap() << ")";
+	return ss.str();
+}
+
 static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[])
 {
-	//if (fd == listenSockFd)
 	if (configFromFd[fd]) // if fd corresponds to a listening socket
 	{	
-		handleNewConnection(fd, fdSets, clientArray);
+		handleNewConnection(fd, fdSets, clientArray, configFromFd[fd]);
 		return ;
 	}
-	std::cout << "Receiving data from client on sock #" << fd << ":" << std::endl;
+	std::cout << "Server " << getServName(configFromFd[clientArray[fd]->getListenFd()]) 
+		<< ": receiving data on sock #" << fd << ":" << std::endl;
 	
 	int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
 	if (nBytesRead <= 0)
@@ -172,7 +178,8 @@ static void	writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client
 	
 	ssize_t nBytesSent = send(fd, (c->getResponse()).c_str(), (c->getResponse()).size(), 0);
 	if ((unsigned long)nBytesSent < (c->getResponse()).size())
-		std::cout << "Sending error: ignoring request" << std::endl; // should add client info here
+		std::cout << "Server " << getServName(configFromFd[c->getListenFd()]) 
+			<< ": error while sending data to sock #" << fd << ", request ignored." << std::endl; // should add client info here
 	c->setFlagResponse(false);
 	c->clearResponse(); // needed?
 	if (c->getFlagCloseAfterWrite())
@@ -186,7 +193,7 @@ static void	writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client
 }
 
 
-static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[])
+static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[], Config *config)
 {
 	Client	*tmpClient = new Client();
 	int		connectSockFd;
@@ -198,7 +205,8 @@ static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clie
 
 	if (connectSockFd == -1)
 	{
-		std::cout << "Could not accept new connection." << std:: endl; // could specify server
+		std::cout << "Server " << getServName(config) 
+			<< ": could not accept new connection." << std:: endl;
 		delete tmpClient;
 	}
 	else
@@ -211,7 +219,8 @@ static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clie
 		FD_SET(connectSockFd, &fdSets->main);
 		if (connectSockFd > fdSets->fdMax)
 			fdSets->fdMax = connectSockFd;
-		std::cout << "Server: connection from a client on socket #" << connectSockFd << std::endl;
+		std::cout << "Server " << getServName(config) 
+			<< ": connection from a client on socket #" << connectSockFd << std::endl;
 		// build inet_ntop equiv with allowed fcts to print client info? (useless if local only)
 	}
 	return ;
@@ -275,49 +284,4 @@ static void	processRequest(Client* client, Config *config)
 	client->setResponse(response.to_string());
 	client->clearRequestBuff();
 	return ;
-}
-
-static std::string	getHelloMsg(void) //tmp function to test sending HTTP data
-{
-	std::string			msg("Hello world, this is 42 WebServ!\r\n");
-	std::stringstream	ss;
-
-	ss << "HTTP/1.1 200 OK\r\n" 
-		<< "Content-Length: " << msg.size() << "\r\n"
-		<< "Content-Type: text/plain; charset=utf-8\r\n\r\n"
-		<< msg;
-
-	return (ss.str());
-}
-
-static std::string	getIndexHtml(void)
-{
-	std::stringstream	ssFile, ssOut;
-	std::ifstream		fs;
-	std::string			content;
-
-	fs.open("index.html");
-	ssFile << fs.rdbuf();
-	content  = ssFile.str();
-
-	ssOut << "HTTP/1.1 200 OK\r\n" 
-		<< "Content-Length: " << content.size() << "\r\n"
-		<< "Content-Type: text/html; charset=utf-8\r\n\r\n"
-		<< content;
-
-	return (ssOut.str());
-}
-
-static std::string	getBadRequest(void) //tmp minimal 400 Error response
-{
-	std::string			msg("Bad Request: either too big or non-conform to HTTP.\n");
-	std::stringstream	ss;
-
-	ss << "HTTP/1.1 400 Bad Request\r\n"
-		<< "Connection: close\r\n"
-		<< "Content-Length: " << msg.size() << "\r\n"
-		<< "Content-Type: text/plain; charset=utf-8\r\n\r\n"
-		<< msg;
-
-	return (ss.str());
 }
