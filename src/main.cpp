@@ -9,10 +9,15 @@ int _main(int argc, char *argv[])
 int main()
 #endif
 {
-    std::vector<Config *> servers = Config::parse_servers("/home/qjungo/Cursus/webserv/config/default.yaml");
+	std::vector<Config *> servers = Config::parse_servers("/home/qjungo/Cursus/webserv/config/default.yaml");
 //    servers[0]->log();
-    HttpRequest request("GET / HTTP/1.1\r\nHost: localhost:8080\r\nUser-Agent: curl/7.68.0\r\nAccept: */*\r\n\r\n");
-    CgiExecutor cgi_executor;
-    std::string res = cgi_executor.execute(request, *servers[0]);
-    std::cout << res << std::endl;
+//	HttpRequest request("GET /linux_cgi HTTP/1.1\r\nUser-Agent: curl/7.68.0\r\nAccept: */*\r\n\r\n");
+	HttpRequest request("GET /new_user HTTP/1.1\r\nUser-Agent: curl/7.68.0\r\nAccept: */*\r\n\r\n");
+	CgiExecutor cgi_executor;
+	request.log();
+
+	std::cout << "======================" << std::endl;
+	std::string res = cgi_executor.execute(request, *servers[0]);
+	std::cout << "======================" << std::endl;
+	std::cout << res << std::endl;
 }

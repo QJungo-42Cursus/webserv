@@ -1,16 +1,15 @@
-#include <csignal>
 #include <vector>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <cstdio>
 #include <sys/wait.h>
 #include "CgiExecutor.h"
-#include "../config/Config.h"
-#include <cstdlib>
 #include <unistd.h>
 #include <ctime>
+#include <sstream>
 
-int fork1()
+static int fork1()
 {
 	int pid = fork();
 	if (pid == -1)
@@ -18,41 +17,99 @@ int fork1()
 	return pid;
 }
 
-
-std::string test()
+static std::map<std::string, std::string> get_env(const HttpRequest &request, const Config &config)
 {
-	#ifdef __LINUX__
-	std::string _path = "cgi/ubuntu_cgi_tester";
-	#else
-	std::string _path = "cgi/cgi_tester";
-	#endif
+	std::map<std::string, std::string> env;
+	std::map<std::string, std::string> headers = request.get_headers();
 
-	_path = "cgi/python_cgi";
+	/// Server related
+	env["SERVER_SOFTWARE"] = "webserv/1.0";
+	env["SERVER_NAME"] = config.server_name.isSome() ? config.server_name.unwrap() : "localhost";
+	env["GATEWAY_INTERFACE"] = "CGI/1.1";
 
+	/// request related
+	env["SERVER_PROTOCOL"] = request.get_version();
+	env["SERVER_PORT"] = "80";
+	if (config.port.isSome())
+	{
+		std::stringstream port("");
+		port << config.port.unwrap();
+		env["SERVER_PORT"] = port.str();
+	}
+	int method = request.get_method();
+	if (method | Http::Methods::GET)
+		env["REQUEST_METHOD"] = "GET";
+	else if (method | Http::Methods::POST)
+		env["REQUEST_METHOD"] = "POST";
+	else if (method | Http::Methods::DELETE)
+		env["REQUEST_METHOD"] = "DELETE";
+//	env["PATH_INFO"] = request.get_path(); // TODO pas sur
+	env["PATH_INFO"] = "cgi"; // TODO pas sur
+	env["PATH_TRANSLATED"] = request.get_path(); // TODO pas sur
+	env["SCRIPT_NAME"] = config.routes.find(request.get_path())->second->cgi.unwrap().cgi_path; // TODO pas sur
+//	env["QUERY_STRING"] // TODO add query string
+	if (headers.count("Host"))
+		env["REMOTE_HOST"] = headers["Host"]; // TODO pas sur
+	else
+		env["REMOTE_HOST"] = "";
+	if (headers.count("Host"))
+		env["REMOTE_ADDR"] = headers["Host"]; // TODO pas sur
+	else
+		env["REMOTE_ADDR"] = "";
+	env["AUTH_TYPE"] = "";
+	env["REMOTE_USER"] = "";
+	env["REMOTE_IDENT"] = "";
+	env["CONTENT_TYPE"] = headers.count("Content-Type") ? headers["Content-Type"] : "";
+	env["CONTENT_LENGTH"] = headers.count("Content-Length") ? headers["Content-Length"] : "";
+
+	/// client related
+	env["HTTP_ACCEPT"] = headers.count("Accept") ? headers["Accept"] : "";
+	env["HTTP_ACCEPT_LANGUAGE"] = headers.count("Accept-Language") ? headers["Accept-Language"] : "";
+	env["HTTP_USER_AGENT"] = headers.count("User-Agent") ? headers["User-Agent"] : "";
+	env["HTTP_COOKIE"] = headers.count("Cookie") ? headers["Cookie"] : "";
+	env["HTTP_REFERER"] = headers.count("Referer") ? headers["Referer"] : "";
+
+	return env;
+}
+
+static char **map_to_env(std::map<std::string, std::string> env)
+{
+	char **envp = new char *[env.size() + 1];
+	int i = 0;
+	for (std::map<std::string, std::string>::iterator it = env.begin(); it != env.end(); ++it)
+	{
+		envp[i] = new char[it->second.size() + it->first.size() + 2];
+		envp[i] = strcpy(envp[i], (it->first + "=" + it->second).c_str());
+		i++;
+	}
+	envp[i] = NULL;
+	return envp;
+}
+
+static void free_env(char **envp)
+{
+	int i = 0;
+	while (envp[i])
+	{
+		delete[] envp[i];
+		i++;
+	}
+	delete[] envp;
+}
+
+std::string CgiExecutor::execute(const HttpRequest &request, const Config &config)
+{
+	std::map<std::string, std::string> env = get_env(request, config);
+	char **envp = map_to_env(env);
+	std::string cgi_path = config.routes.find(request.get_path())->second->cgi.unwrap().cgi_path;
 	char *const argv[] = {
-		(char *) _path.c_str(),
-		(char *) "www/index.html",
-	 	NULL
+			(char *) cgi_path.c_str(),
+			(char *) request.get_path().c_str(),
+			NULL
 	};
 
-	char *const envp[] = {
-		(char *) "REQUEST_METHOD=GET", 
-		(char *) "PATH_INFO=/",
-		// (char *) "PATH_INFO=\"\"",
-		(char *) "SERVER_PROTOCOL=HTTP/1.1", 
-		(char *) "CONTENT_TYPE=",
-		(char *) "CONTENT_LENGTH=",
-		(char *) "HTTP_COOKIE=",
-		(char *) "HTTP_USER_AGENT=",
-		(char *) "QUERY_STRING=",
-		(char *) "REMOTE_ADDR=",
-		(char *) "REMOTE_HOST=",
-		(char *) "SCRIPT_FILENAME=",
-		(char *) "SCRIPT_NAME=",
-		(char *) "SERVER_NAME=",
-		(char *) "SERVER_SOFTWARE=",
-		NULL
-	};
+	std::cout << "path: " << cgi_path << std::endl;
+	std::cout << "path_info: " << env["PATH_INFO"] << std::endl;
 
 	int fd_std[2];
 	if (pipe(fd_std))
@@ -62,7 +119,7 @@ std::string test()
 		throw std::exception();
 
 	int pid;
-	pid = fork();
+	pid = fork1();
 	if (pid == 0)
 	{
 		close(fd_std[STDIN_FILENO]);
@@ -71,20 +128,22 @@ std::string test()
 		dup2(fd_err[STDOUT_FILENO], STDERR_FILENO);
 		close(fd_std[STDOUT_FILENO]);
 		close(fd_err[STDOUT_FILENO]);
-		execve(_path.c_str(), argv, envp);
+		execve(cgi_path.c_str(), argv, envp);
 		std::cout << "oups..." << std::endl;
 		perror("execvpe: ");
+		free_env(envp);
 		exit(1);
 	}
 	close(fd_std[STDOUT_FILENO]);
 	close(fd_err[STDOUT_FILENO]);
+	free_env(envp);
 
 	const int S_TIMEOUT = 2;
 
 	std::time_t s_start = std::time(0);
 	bool did_timeout = false;
 	int exit_status = 0;
-	while(1)
+	while (true)
 	{
 		std::time_t elapsed = std::time(0) - s_start;
 		did_timeout = (elapsed >= S_TIMEOUT);
@@ -106,89 +165,22 @@ std::string test()
 		return "";
 	}
 
-	std::cout << "exit status: " << exit_status << std::endl;
-
+	std::string res;
 	if (exit_status == 0)
 	{
-		char buff[2048] = { 0 };
+		char buff[2048] = {0};
 		int count = read(fd_std[STDIN_FILENO], buff, 2047);
 		buff[count] = 0;
-		std::cout << "buff: '" << buff << "'" << std::endl;
+		res = buff;
 	}
-	else 
+	else
 	{
-		char buff[2048] = { 0 };
+		char buff[2048] = {0};
 		int count = read(fd_err[STDIN_FILENO], buff, 2047);
 		buff[count] = 0;
-		std::cout << "ebuff: '" << buff << "'" << std::endl;
+		res = buff;
 	}
 	close(fd_err[STDIN_FILENO]);
 	close(fd_std[STDIN_FILENO]);
-	return "";
-}
-
-
-
-std::map<std::string, std::string> get_env(const HttpRequest &request)
-{
-	std::map<std::string, std::string> env;
-
-	if (request.get_headers().count("content-type"))
-		env["CONTENT_TYPE"] = request.get_headers().find("content-type")->second;
-	if (request.get_headers().count("content-length"))
-		env["CONTENT_LENGTH"] = request.get_headers().find("content-length")->second;
-	if (request.get_headers().count("cookie"))
-		env["HTTP_COOKIE"] = request.get_headers().find("cookie")->second;
-	if (request.get_headers().count("user-agent"))
-		env["HTTP_USER_AGENT"] = request.get_headers().find("user-agent")->second;
-	if (request.get_headers().count("query-string"))
-		env["QUERY_STRING"] = request.get_headers().find("query-string")->second;
-	if (request.get_headers().count("remote-addr"))
-		env["REMOTE_ADDR"] = request.get_headers().find("remote-addr")->second;
-	if (request.get_headers().count("remote-host"))
-		env["REMOTE_HOST"] = request.get_headers().find("remote-host")->second;
-	if (request.get_headers().count("script-filename"))
-		env["SCRIPT_FILENAME"] = request.get_headers().find("script-filename")->second;
-	if (request.get_headers().count("script-name"))
-		env["SCRIPT_NAME"] = request.get_headers().find("script-name")->second;
-	if (request.get_headers().count("server-name"))
-		env["SERVER_NAME"] = request.get_headers().find("server-name")->second;
-	if (request.get_headers().count("server-software"))
-		env["SERVER_SOFTWARE"] = request.get_headers().find("server-software")->second;
-	if (request.get_headers().count("request-method"))
-		env["REQUEST_METHOD"] = request.get_headers().find("request-method")->second;
-	if (request.get_headers().count("path-info"))
-		env["PATH_INFO"] = request.get_headers().find("path-info")->second;
-	if (request.get_headers().count("server-protocol"))
-		env["SERVER_PROTOCOL"] = request.get_headers().find("server-protocol")->second;
-	if (request.get_headers().count("http-accept"))
-		env["HTTP_ACCEPT"] = request.get_headers().find("http-accept")->second;
-	if (request.get_headers().count("http-accept-charset"))
-		env["HTTP_ACCEPT_CHARSET"] = request.get_headers().find("http-accept-charset")->second;
-	if (request.get_headers().count("http-accept-encoding"))
-		env["HTTP_ACCEPT_ENCODING"] = request.get_headers().find("http-accept-encoding")->second;
-	if (request.get_headers().count("http-accept-language"))
-		env["HTTP_ACCEPT_LANGUAGE"] = request.get_headers().find("http-accept-language")->second;
-	if (request.get_headers().count("http-connection"))
-		env["HTTP_CONNECTION"] = request.get_headers().find("http-connection")->second;
-	if (request.get_headers().count("http-host"))
-		env["HTTP_HOST"] = request.get_headers().find("http-host")->second;
-	// TODO check if we need to add more headers, or if some are not existing
-	return env;
-}
-
-std::string CgiExecutor::execute(const HttpRequest &request, const Config &config)
-{
-    // log request _headers
-
-    for (std::map<std::string, std::string>::iterator it = request.get_headers().begin(); it != request.get_headers().end(); it++)
-        std::cout << it->first << ": " << it->second << std::endl;
-
-    std::map<std::string, std::string> env = get_env(request);
-    for (std::map<std::string, std::string>::iterator it = env.begin(); it != env.end(); ++it)
-    {
-        std::cout << it->first << ": " << it->second << std::endl;
-    }
-
-    return "";
+	return res;
 }

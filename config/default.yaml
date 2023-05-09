@@ -13,8 +13,11 @@ servers: # liste de serveurs
             repertory_listing: false # autorise le listing des repertoires (optionnel, default: false)
             index: index.html # page index (optionnel, default: index.html)
         - /new_user:
-            cgi: .php PWD/cgi-bin/ # cgi 'extension' 'racine du cgi' (optionnel)
+            cgi: .py PWD/cgi/python_cgi # cgi 'extension' 'racine du cgi' (optionnel)
             methods: POST
+        - /linux_cgi:
+            cgi: .sh PWD/cgi/ubuntu_cgi_tester
+            methods: GET
         - /uploader:
             methods: POST
             upload: PWD/www/files/ # racine du telechargement, active l'upload de fichier (optionnel)

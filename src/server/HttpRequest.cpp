@@ -71,3 +71,16 @@ void HttpRequest::parse_header(const std::string& line) {
         headers_[key] = value;
     }
 }
+
+void HttpRequest::log() const
+{
+	std::cout << "method: " << method_ << std::endl;
+	std::cout << "path: " << path_ << std::endl;
+	std::cout << "version: " << version_ << std::endl;
+	std::cout << "headers: " << std::endl;
+	for (std::map<std::string, std::string>::const_iterator it = headers_.begin(); it != headers_.end(); ++it)
+	{
+		std::cout << it->first << ": " << it->second << std::endl;
+	}
+	std::cout << "body: " << body_ << std::endl;
+}

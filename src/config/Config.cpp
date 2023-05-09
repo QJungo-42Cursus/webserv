@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <set>
+#include <csignal>
 #include "../utils/utils.h"
 #include "yaml_helper.h"
 
@@ -232,6 +233,24 @@ static Option<std::string> get_list_content(std::string &str, std::string key)
 	return Option<std::string>::Some(lines);
 }
 
+static void replacePWD(std::string &str)
+{
+	std::string pwd;
+	{
+		char *_pwd = getcwd(NULL, 0);
+		if (_pwd == NULL)
+			throw std::runtime_error("getcwd failed");
+		pwd = _pwd;
+		free(_pwd); // TODO : check if it's ok
+	}
+	std::string::size_type pos = 0;
+	while ((pos = str.find("PWD", pos)) != std::string::npos)
+	{
+		str.replace(pos, 3, pwd);
+		pos += pwd.size();
+	}
+}
+
 static std::map<int, std::string> parse_error_pages(std::string &str)
 {
 	std::map<int, std::string> map;
@@ -254,6 +273,10 @@ static std::map<int, std::string> parse_error_pages(std::string &str)
 			throw std::runtime_error("Invalid config file, an error_page must be in the form '- <error_code> <path>'");
 		map[std::atoi(words[0].c_str())] = words[1].substr(1);
 	}
+
+	for (std::map<int, std::string>::iterator it = map.begin(); it != map.end(); ++it)
+		replacePWD(it->second);
+
 	return map;
 }
 
@@ -307,13 +330,24 @@ static std::map<std::string, Route *> parse_routes(std::string &str)
 		Route *route = Route::parse(route_infos);
 		map[route_path] = route;
 	}
+
+	for (std::map<std::string, Route *>::iterator it = map.begin(); it != map.end(); ++it)
+	{
+		if (it->second->root.isSome())
+			replacePWD(it->second->root.unwrap());
+		if (it->second->index.isSome())
+			replacePWD(it->second->index.unwrap());
+		if (it->second->cgi.isSome())
+			replacePWD(it->second->cgi.unwrap().cgi_path);
+	}
+
 	return map;
 }
+
 
 Config *Config::parse(std::string &server_config)
 {
 	Config *config = new Config();
-
 	{
 		Option<std::string> line = find_key_value_line(server_config, "server_name", true);
 		if (line.isSome())
