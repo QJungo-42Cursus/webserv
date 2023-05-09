@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/09 10:29:52 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/09 10:47:25 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -266,8 +266,8 @@ static void	processRequest(Client* client, Config *config)
 	//std::cout << tmp << std::endl;
 	//client->setResponse(tmp);
 	
-	client->setResponse(getBadRequest());
-	//client->setResponse(response.to_string());
+	//client->setResponse(getBadRequest());
+	client->setResponse(response.to_string());
 	client->clearRequestBuff();
 	
 	/*else if (strncmp(client->getRequestBuff(), "GET /index.html", 15) == 0) //to replace with proper parser
