@@ -6,7 +6,7 @@
 /*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:55:07 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/08 13:45:42 by qjungo           ###   ########.fr       */
+/*   Updated: 2023/05/09 15:23:51 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ class Client
 		~Client(void);
 
 		int							getFd(void) const;
+		int							getListenFd(void) const;
 		struct sockaddr*			getAddr(void);
 		socklen_t*					getAddrSize(void);
 		char*						getRequestBuff(void);
@@ -31,6 +32,7 @@ class Client
 		bool						getFlagCloseAfterWrite(void) const;
 
 		void						setFd(int fd);
+		void						setListenFd(int fd);
 		void						setNBytesRequest(int nBytesRequest);
 		void						setFlagResponse(bool);
 		void						setResponse(std::string);
@@ -44,6 +46,7 @@ class Client
 		Client& operator=(Client const& rhs);
 
 		int						_fd;
+		int						_listenFd;
 		struct sockaddr_storage	_addr; //_storage big enough for any addr type 
 		socklen_t				_addrSize;
 		char					_request[BUFFSIZE]; // contains the HTTP request

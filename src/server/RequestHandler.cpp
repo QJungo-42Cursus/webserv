@@ -25,6 +25,45 @@ bool RequestHandler::is_method_allowed(const Route* route, const HttpRequest& re
     return (allowed_methods & request.get_method()) != 0;
 }
 
+std::string RequestHandler::create_error_html(int error_code, const std::string& error_phrase) const {
+    std::stringstream html;
+    html << "<!DOCTYPE html>"
+         << "<html>"
+         << "<head><title>Error Page</title></head>"
+         << "<body>"
+         << "<h1 style=\"text-align:center;\">" << error_code << " " << error_phrase << "</h1>"
+         << "<p style=\"text-align:center;\">42_webserv</p>"
+         << "</body>"
+         << "</html>";
+    return html.str();
+}
+
+HttpResponse RequestHandler::handle_error(int error_code, const std::string& error_phrase) {
+    HttpResponse response;
+
+    std::map<int, std::string>::const_iterator it = config_->error_pages.find(error_code);
+    if (it != config_->error_pages.end()) {
+        // If an error page is found, use it as the body
+        std::string file_path = it->second;
+        std::cout << file_path << std::endl;
+        std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
+        if (file.is_open()) {
+            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            response.set_body(content);
+        } else {
+            response.set_body(create_error_html(error_code, error_phrase));    
+        } 
+    } else {
+        // If no error page is found, create a default error page
+        response.set_body(create_error_html(error_code, error_phrase));
+    }
+    response.set_version("HTTP/1.1");
+    response.set_status(error_code, error_phrase);
+    response.add_header("Content-Type", "text/html");
+
+    return response;
+}
+
 std::string get_content_type(const std::string& path) {
     std::string::size_type idx = path.rfind('.');
     if (idx != std::string::npos) {
@@ -44,13 +83,11 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest& request) {
 
     Route* route = find_route(request.get_path());
     if (route == NULL) {
-        response.set_status(404, "Not Found");
-        return response;
+        return handle_error(404, "Not Found");
     }
 
     if (!is_method_allowed(route, request)) {
-        response.set_status(405, "Method Not Allowed");
-        return response;
+        return handle_error(405, "Method Not Allowed");
     }
 
     std::string file_path;
@@ -75,14 +112,13 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest& request) {
     std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
 
     if (!file) {
-        response.set_status(404, "Not Found");
+        return handle_error(404, "Not Found");
     } else {
         std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         response.set_body(content);
         response.set_status(200, "OK");
         response.add_header("Content-Type", get_content_type(file_path));
     }
-
     return response;
 }
 
