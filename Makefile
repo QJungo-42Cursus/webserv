@@ -14,7 +14,8 @@ SRCS =			src/main.cpp \
 				src/server/Client.cpp \
 				src/server/listenerSocket.cpp \
 				src/server/RequestHandler.cpp \
-				src/cgi_executor/CgiExecutor.cpp
+				src/cgi_executor/CgiExecutor.cpp \
+				src/dir_listing/dir_listing.cpp \
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
