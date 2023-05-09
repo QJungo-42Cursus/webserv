@@ -6,7 +6,7 @@
 /*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:23:23 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/08 17:55:13 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/09 10:00:04 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,10 +36,12 @@
 # define PORT "8080"
 # define BACKLOG 5 // number of connections allowed on incoming queue
 # define BUFFSIZE 2048 // size of read buffer containing request
-
 //# define FD_SETSIZE 1024 // how to overide the default higher value? (should test what happens if pass limit)
 
-# include "server/Client.hpp"
+#define DEFAULT_CONFIG_FILE_PATH "./config/default.yaml"
+
+# include "server/Client.hpp" // should the class headers be included in the main header ? or the other way around ?
+
 # include "server/HttpResponse.h"
 # include "server/HttpRequest.h"
 # include "server/RequestHandler.h"

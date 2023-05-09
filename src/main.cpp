@@ -6,13 +6,12 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/08 17:56:29 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/09 10:29:52 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "webserv.hpp"
 
-# include "server/RequestHandler.h"
 static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
 static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[]);
@@ -31,10 +30,6 @@ static std::string	getIndexHtml(void); //tmp minimal HTTP response from index.ht
 
 static std::string	getBadRequest(void); //tmp minimal 400 Error response
 
-#define DEFAULT_CONFIG_FILE_PATH "./config/default.yaml"
-
-//#include "server/HttpRequest.h"
-//#include "server/HttpResponse.h"
 int main(int argc, char **argv)
 {
 
@@ -227,7 +222,7 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 static void	processRequest(Client* client, Config *config)
 {
 	client->setFlagResponse(true);
-	client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
+	//client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
 	
 	// Create a new response
 	HttpResponse response;
@@ -242,7 +237,7 @@ static void	processRequest(Client* client, Config *config)
 		if (request.get_method() == Http::Methods::GET) 
 		{
 			GetRequestHandler get_handler(config);
-			response = get_handler.handle_request(request);
+			response = get_handler.handle_request(request); //error or bad request not showing up on browser, need more info or content !=0
 		}
 		else if (request.get_method() == Http::Methods::POST)
 		{
@@ -261,7 +256,18 @@ static void	processRequest(Client* client, Config *config)
 		}
 
 	}
-	client->setResponse(response.to_string());
+	std::cout << response.to_string() << std::endl; //tmp for debug
+	
+	//std::string tmp = response.to_string();
+	//tmp.pop_back();
+	//tmp.pop_back();
+	//tmp.pop_back();
+	//tmp = tmp + "Content-Type: text/plain; charset=utf-8\r\n\r\n";
+	//std::cout << tmp << std::endl;
+	//client->setResponse(tmp);
+	
+	client->setResponse(getBadRequest());
+	//client->setResponse(response.to_string());
 	client->clearRequestBuff();
 	
 	/*else if (strncmp(client->getRequestBuff(), "GET /index.html", 15) == 0) //to replace with proper parser
