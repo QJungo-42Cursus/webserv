@@ -104,7 +104,7 @@ std::string CgiExecutor::execute(const HttpRequest &request, const Config &confi
 	std::string cgi_path = config.routes.find(request.get_path())->second->cgi.unwrap().cgi_path;
 	char *const argv[] = {
 			(char *) cgi_path.c_str(),
-			(char *) request.get_path().c_str(),
+			(char *) request.get_path().c_str(), // TODO make it persistent
 			NULL
 	};
 
