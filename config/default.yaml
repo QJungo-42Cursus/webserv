@@ -30,4 +30,4 @@ servers: # liste de serveurs
             cgi: .php PWD/cgi-bin/
   - server:
       server_name: domain2.com
-      port: 8080
+      port: 8060

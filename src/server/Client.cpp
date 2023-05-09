@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 18:22:48 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/07 13:29:40 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/09 15:24:51 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,11 @@ Client::~Client(void)
 int	Client::getFd(void) const
 {
 	return (this->_fd);
+}
+
+int	Client::getListenFd(void) const
+{
+	return (this->_listenFd);
 }
 
 char*	Client::getRequestBuff(void)
@@ -78,6 +83,12 @@ void	Client::clearRequestBuff(void)
 void	Client::setFd(int fd)
 {
 	this->_fd = fd;
+	return ;
+}
+
+void	Client::setListenFd(int fd)
+{
+	this->_listenFd = fd;
 	return ;
 }
 

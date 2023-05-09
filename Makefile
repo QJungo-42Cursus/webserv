@@ -1,6 +1,7 @@
 NAME =     		webserv
 CC =			c++
 RM =			rm -f
+#CFLAGS =		-std=c++98 -I ./http/ -g3 -fsanitize=address
 CFLAGS =		-std=c++98 -I ./http/
 OBJS =			$(SRCS:.cpp=.o)
 SRCS =			src/main.cpp \

@@ -6,24 +6,24 @@
 /*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 15:32:59 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/08 13:49:16 by qjungo           ###   ########.fr       */
+/*   Updated: 2023/05/09 14:15:16 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../webserv.hpp"
-#include <cstdlib>
+#include <cstdlib> // needed?
 
 
-static void		fillServInfo(struct addrinfo** serverInfo);
+static void		fillServInfo(struct addrinfo** serverInfo, Config* config);
 
 static int		bindSocket(struct addrinfo* serverInfo);
 
-int	getListenSock(void)
+int	getListenSock(Config *config)
 {
 	int					listenSockFd;
 	struct addrinfo*	serverInfo; // linked list of server info (to be filled by getaddrinfo())
 
-	fillServInfo(&serverInfo);
+	fillServInfo(&serverInfo, config);
 	listenSockFd = bindSocket(serverInfo);
 	freeaddrinfo(serverInfo); 
 	if (listenSockFd == -1)
@@ -45,17 +45,21 @@ int	getListenSock(void)
 	return (listenSockFd);
 }
 
-static void	fillServInfo(struct addrinfo** serverInfo)
+static void	fillServInfo(struct addrinfo** serverInfo, Config *config)
 {
+	std::stringstream	ss;
+	std::string			port;
 	struct addrinfo		hints; // Connection type(s) and IP type(s) we allow
 	
+	ss << config->port.unwrap(); // need try catch in case None?
+	port = ss.str();
 	memset(&hints, 0, sizeof(hints)); // init to empty
 	hints.ai_family = AF_UNSPEC;     // either IPv4 or IPv6
 	hints.ai_socktype = SOCK_STREAM; // only TCP stream sockets (no UDP allowed)
 	hints.ai_flags = AI_PASSIVE; // flag to create a listening socket
 
 	// first param NULL for local host
-	if (int retVal = getaddrinfo(NULL, PORT, &hints, serverInfo) != 0) 
+	if (int retVal = getaddrinfo(NULL, port.c_str(), &hints, serverInfo) != 0) 
 	{	
 		std::cout << "Error using getaddrinfo: " << gai_strerror(retVal) << std::endl;
 		exit(EXIT_FAILURE); //free and exit
@@ -79,7 +83,7 @@ static int	bindSocket(struct addrinfo* serverInfo)
 				"parameter set, trying with next set..." << std::endl;
 			continue ;
 		}
-		// to avoid waiting for a previous connection to clear before reusing address
+		// to avoid waiting for a previous connection to clear before reusing address (not sure if should be allowed...)
 		if (setsockopt(listenSockFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) 
 		{
 			std::cout << "Warning: could not allow address reuse for listening socket"
