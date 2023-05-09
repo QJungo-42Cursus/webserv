@@ -44,7 +44,7 @@ static std::map<std::string, std::string> get_env(const HttpRequest &request, co
 	else if (method | Http::Methods::DELETE)
 		env["REQUEST_METHOD"] = "DELETE";
 //	env["PATH_INFO"] = request.get_path(); // TODO pas sur
-	env["PATH_INFO"] = "cgi"; // TODO pas sur
+	env["PATH_INFO"] = "/home/qjungo/Cursus/webserv/www/super.bla"; // TODO pas sur
 	env["PATH_TRANSLATED"] = request.get_path(); // TODO pas sur
 	env["SCRIPT_NAME"] = config.routes.find(request.get_path())->second->cgi.unwrap().cgi_path; // TODO pas sur
 //	env["QUERY_STRING"] // TODO add query string
@@ -102,14 +102,31 @@ std::string CgiExecutor::execute(const HttpRequest &request, const Config &confi
 	std::map<std::string, std::string> env = get_env(request, config);
 	char **envp = map_to_env(env);
 	std::string cgi_path = config.routes.find(request.get_path())->second->cgi.unwrap().cgi_path;
+	std::string request_path = request.get_path();
+	request_path = "/home/qjungo/Cursus/webserv/www/super.bla";
+
 	char *const argv[] = {
-			(char *) cgi_path.c_str(),
-			(char *) request.get_path().c_str(),
+			new char[cgi_path.size() + 1],
+			new char[request_path.size() + 1],
 			NULL
 	};
+	strcpy(argv[0], cgi_path.c_str());
+	argv[0][cgi_path.size()] = '\0';
+	strcpy(argv[1], request_path.c_str());
+	argv[1][request_path.size()] = '\0';
 
-	std::cout << "path: " << cgi_path << std::endl;
+	if (access(argv[1], F_OK) == -1)
+		throw std::exception(); // TODO
+	if (access(argv[0], X_OK) == -1)
+		throw std::exception(); // TODO
+
+	std::cout << "cgi path: " << cgi_path << std::endl;
+	std::cout << "request path: " << request_path << std::endl;
 	std::cout << "path_info: " << env["PATH_INFO"] << std::endl;
+	for (int i = 0; envp[i]; i++)
+		std::cout << envp[i] << std::endl;
+
+
 
 	int fd_std[2];
 	if (pipe(fd_std))
