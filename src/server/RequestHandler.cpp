@@ -45,7 +45,6 @@ HttpResponse RequestHandler::handle_error(int error_code, const std::string& err
     if (it != config_->error_pages.end()) {
         // If an error page is found, use it as the body
         std::string file_path = it->second;
-        std::cout << file_path << std::endl;
         std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
         if (file.is_open()) {
             std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
