@@ -8,7 +8,7 @@ int main()
 	std::vector<Config *> servers = Config::parse_servers("/home/qjungo/Cursus/webserv/config/default.yaml");
 //    servers[0]->log();
 //	HttpRequest request("GET /linux_cgi HTTP/1.1\r\nUser-Agent: curl/7.68.0\r\nAccept: */*\r\n\r\n");
-	HttpRequest request("GET /new_user HTTP/1.1\r\nUser-Agent: curl/7.68.0\r\nAccept: */*\r\n\r\n");
+	HttpRequest request("GET /42_cgi HTTP/1.1\r\nUser-Agent: curl/7.68.0\r\nAccept: */*\r\n\r\n");
 	CgiExecutor cgi_executor;
 	request.log();
 

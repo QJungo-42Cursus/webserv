@@ -3,7 +3,7 @@ CC =			c++
 RM =			rm -f
 CFLAGS =		-std=c++98 -I ./http/
 OBJS =			$(SRCS:.cpp=.o)
-SRCS =			src/mainq.cpp \
+SRCS =			src/main.cpp \
 				src/config/CgiConfig.cpp \
 				src/config/Config.cpp \
 				src/config/Route.cpp \

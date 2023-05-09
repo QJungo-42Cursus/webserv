@@ -15,8 +15,15 @@ servers: # liste de serveurs
         - /new_user:
             cgi: .py PWD/cgi/python_cgi # cgi 'extension' 'racine du cgi' (optionnel)
             methods: POST
+            redirection: /404.html # redirection de la route (optionnel)
         - /linux_cgi:
             cgi: .sh PWD/cgi/ubuntu_cgi_tester
+            methods: GET
+        - /php_cgi:
+            cgi: .php /usr/bin/php
+            methods: GET
+        - /42_cgi:
+            cgi: .bla PWD/cgi/ubuntu_cgi_tester
             methods: GET
         - /uploader:
             methods: POST
