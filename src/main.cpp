@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/09 10:47:25 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/09 15:33:31 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,11 @@ static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
 static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[]);
 
-static void		handleSockError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[]);
+static void		handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet, Client* clientArray[]);
 
-static void		readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[], Config* config);
+static void		readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[]);
 
-static void		writeSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[]);
+static void		writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[]);
 
 static void	processRequest(Client* client, Config *config);
 
@@ -57,26 +57,38 @@ int main(int argc, char **argv)
         std::cout << std::endl;
     }
 
-	int				listenSockFd; //, connectSockFd;
+	if (configs.size() == 0) // to remove if cannot happen
+		exit(EXIT_FAILURE);
+
+	int				nbServ = configs.size();	
+	int				listenSockFds[nbServ];
 	t_fdSets		fdSets; // Struct with the sets of FDs to be monit. with select
 	struct timeval	timeOut; // Max time for select to return if no socket has updates
-
-	listenSockFd = getListenSock();
-	FD_ZERO(&fdSets.main); // make sure it's empty
-	FD_SET(listenSockFd, &fdSets.main); // adds the listening sock to the set
-	fdSets.fdMax = listenSockFd;
+	Config*			configFromFd[FD_SETSIZE] = {};
+	Client*			clientArray[FD_SETSIZE] = {};
 
 	timeOut.tv_sec = 5;
 	timeOut.tv_usec = 0;
-
-	Client* clientArray[FD_SETSIZE] = {};
-
-	std::cout << "Server: ready, waiting for connections..." << std::endl;
 	
+	FD_ZERO(&fdSets.main); // make sure it's empty
+	fdSets.fdMax = 0;
+
+	// Get one listening socket per "server"
+	for (int iServ = 0; iServ < nbServ; iServ++)
+	{
+		listenSockFds[iServ] = getListenSock(configs[iServ]);
+		configFromFd[listenSockFds[iServ]] = configs[iServ];
+		FD_SET(listenSockFds[iServ], &fdSets.main); // adds the listening sock to the set
+		if (listenSockFds[iServ] > fdSets.fdMax)
+			fdSets.fdMax = listenSockFds[iServ];
+		std::cout << "Server " << iServ + 1 << ": ready, listening on port "
+			<< (configs[iServ]->port).unwrap() << std::endl;
+	}
+
 	// Main loop
 	while (true)
 	{
-		// Poll sokets with select
+		// Poll sockets with select
 		// if (pollSockets(&fdSets, &timeOut) == 0)
 		(void)timeOut;
 		if (pollSockets(&fdSets, NULL) == 0)
@@ -89,29 +101,30 @@ int main(int argc, char **argv)
 		for (int fd = 0; fd <= fdSets.fdMax; fd++)
  		{
 			if (FD_ISSET(fd, &fdSets.error))
-				handleSockError(fd, listenSockFd, &fdSets.main, clientArray);
+				handleSockError(fd, configFromFd, &fdSets.main, clientArray);
 			else if (FD_ISSET(fd, &fdSets.read))
-				readSocket(fd, listenSockFd, &fdSets, clientArray, configs[0]);
+				readSocket(fd, configFromFd, &fdSets, clientArray);
 			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
 			{	
-				if (clientArray[fd]->getFlagResponse() == false)
+				if (clientArray[fd] && clientArray[fd]->getFlagResponse() == false)
 					continue ;
-				writeSocket(fd, listenSockFd, &fdSets, clientArray);
+				writeSocket(fd, configFromFd, &fdSets, clientArray);
 			}
 		}
 	}
 	return (0);
 }
 
-static void	handleSockError(int fd, int listenSockFd, fd_set* mainFdSet, Client* clientArray[])
+static void	handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet, Client* clientArray[])
 {
-	if (fd == listenSockFd)
-
+	//if (fd == listenSockFd)
+	if (configFromFd[fd]) //should add serv info in msg
 	{
-		std::cout << "Error on listening socket, server will reboot in 5s..."
+		std::cout << "Error on listening socket, server will shutdown in 5s..."
 			<< std::endl;
-		// should free all clients
-		exit(EXIT_FAILURE);
+		// should free all clients ?
+		sleep(5);
+		exit(EXIT_FAILURE); // make it reboot instead?
 	}
 	std::cout << "Error on socket " << fd << ": closing connection." << std::endl;
 	close(fd); // needed?
@@ -121,19 +134,20 @@ static void	handleSockError(int fd, int listenSockFd, fd_set* mainFdSet, Client*
 	return ;
 }
 
-static void	readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[], Config *config)
+static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[])
 {
-
-	if (fd == listenSockFd)
+	//if (fd == listenSockFd)
+	if (configFromFd[fd]) // if fd corresponds to a listening socket
 	{	
-		handleNewConnection(listenSockFd, fdSets, clientArray);
+		handleNewConnection(fd, fdSets, clientArray);
 		return ;
 	}
 	std::cout << "Receiving data from client on sock #" << fd << ":" << std::endl;
+	
 	int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
 	if (nBytesRead <= 0)
 	{
-		if (nBytesRead == 0) 
+		if (nBytesRead == 0) // should add more serv and client info
 			std::cout << "Client on sock #" << fd << " closed the connection." << std::endl;
 		else
 			std::cout << "Error on sock #" << fd << ", closing connection." << std::endl;
@@ -145,20 +159,20 @@ static void	readSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clien
 	}
 	clientArray[fd]->setNBytesRequest(nBytesRead);
 	std::cout << clientArray[fd]->getRequestBuff() << std::endl; // tmp
-	processRequest(clientArray[fd], config);
+	processRequest(clientArray[fd], configFromFd[clientArray[fd]->getListenFd()]);
 	return ;
 }
 
-static void	writeSocket(int fd, int listenSockFd, t_fdSets* fdSets, Client* clientArray[])
+static void	writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[])
 {
 	Client *c = clientArray[fd];
 
-	if (fd == listenSockFd) // This should never happen (cannot write to listening socket)
-		return ;
+	if (configFromFd[fd]) // This should never happen (cannot write to listening socket)
+		return ; // add msg in case happens?
 	
 	ssize_t nBytesSent = send(fd, (c->getResponse()).c_str(), (c->getResponse()).size(), 0);
 	if ((unsigned long)nBytesSent < (c->getResponse()).size())
-		std::cout << "Sending error: ignoring request" << std::endl;
+		std::cout << "Sending error: ignoring request" << std::endl; // should add client info here
 	c->setFlagResponse(false);
 	c->clearResponse(); // needed?
 	if (c->getFlagCloseAfterWrite())
@@ -184,12 +198,13 @@ static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clie
 
 	if (connectSockFd == -1)
 	{
-		std::cout << "Could not accept new connection." << std:: endl;
+		std::cout << "Could not accept new connection." << std:: endl; // could specify server
 		delete tmpClient;
 	}
 	else
 	{
 		tmpClient->setFd(connectSockFd);
+		tmpClient->setListenFd(listenSockFd);
 		clientArray[connectSockFd] = tmpClient;
 		// need to make sock non blocking here with fcntl?
 		fcntl(connectSockFd, F_SETFL, O_NONBLOCK);
@@ -197,7 +212,7 @@ static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clie
 		if (connectSockFd > fdSets->fdMax)
 			fdSets->fdMax = connectSockFd;
 		std::cout << "Server: connection from a client on socket #" << connectSockFd << std::endl;
-		// build inet_ntop equiv with allowed fcts to print client info? (usless if local only)
+		// build inet_ntop equiv with allowed fcts to print client info? (useless if local only)
 	}
 	return ;
 }
@@ -212,7 +227,7 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 		&fdSets->error, timeOut);
 	if (selectRetVal == -1)
 	{
-		std::cout << "Error while polling with select, server will reboot in 5s..." << std::endl;
+		std::cout << "Error while polling with select, server will shutdown in 5s..." << std::endl;
 		sleep(5);
 		exit(EXIT_FAILURE); // (should free Clients first) should implement main proc to reboot...
 	}
@@ -257,26 +272,8 @@ static void	processRequest(Client* client, Config *config)
 
 	}
 	std::cout << response.to_string() << std::endl; //tmp for debug
-	
-	//std::string tmp = response.to_string();
-	//tmp.pop_back();
-	//tmp.pop_back();
-	//tmp.pop_back();
-	//tmp = tmp + "Content-Type: text/plain; charset=utf-8\r\n\r\n";
-	//std::cout << tmp << std::endl;
-	//client->setResponse(tmp);
-	
-	//client->setResponse(getBadRequest());
 	client->setResponse(response.to_string());
 	client->clearRequestBuff();
-	
-	/*else if (strncmp(client->getRequestBuff(), "GET /index.html", 15) == 0) //to replace with proper parser
-		client->setResponse(getIndexHtml());
-	else if (strncmp(client->getRequestBuff(), "GET", 3) == 0) //to replace with proper parser
-		client->setResponse(getHelloMsg());
-	else
-		client->setResponse(getBadRequest());
-	*/
 	return ;
 }
 

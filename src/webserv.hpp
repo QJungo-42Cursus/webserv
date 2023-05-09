@@ -6,7 +6,7 @@
 /*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:23:23 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/09 10:00:04 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/09 12:41:06 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@
 //#include <string.h>
 
 
-# define PORT "8080"
+//# define PORT "8080" //replaced by config->port
 # define BACKLOG 5 // number of connections allowed on incoming queue
 # define BUFFSIZE 2048 // size of read buffer containing request
 //# define FD_SETSIZE 1024 // how to overide the default higher value? (should test what happens if pass limit)
@@ -49,7 +49,7 @@
 
 /* Functions ***************************************************/
 
-int		getListenSock(void);
+int		getListenSock(Config *config);
 
 /* Structures *************************************************/
 
