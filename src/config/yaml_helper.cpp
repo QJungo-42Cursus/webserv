@@ -1,5 +1,3 @@
-
-
 #include <string>
 #include <sstream>
 #include <vector>
@@ -60,7 +58,7 @@ Option<short> parse_methods(std::string &str)
 
 std::string unpad_from_left(const std::string &str, size_t padding, bool throw_if_something)
 {
-	std::string result = "";
+	std::string result;
 	std::istringstream iss(str);
 	for (std::string line; std::getline(iss, line);)
 	{

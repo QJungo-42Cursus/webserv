@@ -1,7 +1,6 @@
 #ifndef ROUTE_H
 #define ROUTE_H
 
-
 #include <string>
 #include "../utils/Option.h"
 #include "Config.h"
@@ -14,6 +13,8 @@ public:
 
 	void log() const;
 
+	~Route();
+
 	struct DEFAULT
 	{
 		static const short METHODS;
@@ -21,12 +22,6 @@ public:
 		static const Option<std::string> INDEX;
 		static const Option<std::string> ROOT;
 	};
-
-
-	~Route()
-	{}
-
-public:
 	Option<short> methods;
 	Option<std::string> redirection;
 	Option<std::string> root;
