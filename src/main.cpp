@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 	int				listenSockFds[nbServ];
 	t_fdSets		fdSets; // Struct with the sets of FDs to be monit. with select
 	struct timeval	timeOut; // Max time for select to return if no socket has updates
-	Config*			configFromFd[FD_SETSIZE] = {};
+	Config*			configFromFd[FD_SETSIZE] = {}; // TODO le meme port aura tjs le meme fd?
 	Client*			clientArray[FD_SETSIZE] = {};
 
 	timeOut.tv_sec = 5;
@@ -147,7 +147,7 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		handleNewConnection(fd, fdSets, clientArray, configFromFd[fd]);
 		return ;
 	}
-	std::cout << "Server " << getServName(configFromFd[clientArray[fd]->getListenFd()]) 
+	std::cout << "=== Server " << getServName(configFromFd[clientArray[fd]->getListenFd()])
 		<< ": receiving data on sock #" << fd << ":" << std::endl;
 	
 	int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
@@ -164,7 +164,7 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		return ;
 	}
 	clientArray[fd]->setNBytesRequest(nBytesRead);
-	std::cout << clientArray[fd]->getRequestBuff() << std::endl; // tmp
+	std::cout << clientArray[fd]->getRequestBuff() << "===" << std::endl; // tmp
 	processRequest(clientArray[fd], configFromFd[clientArray[fd]->getListenFd()]);
 	return ;
 }
@@ -275,12 +275,12 @@ static void	processRequest(Client* client, Config *config)
 		} 
 		else
 		{
-			response.set_version(request.get_version());
+			response.set_version("HTTP/1.1");
 			response.set_status(405, "Method Not Allowed");
 		}
 
 	}
-	std::cout << response.to_string() << std::endl; //tmp for debug
+	std::cout << "==== Response ====" << std::endl << response.to_string() << "\n==================" << std::endl; //tmp for debug
 	client->setResponse(response.to_string());
 	client->clearRequestBuff();
 	return ;
