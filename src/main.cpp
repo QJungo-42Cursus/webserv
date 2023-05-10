@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/10 15:26:46 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/10 15:52:59 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,10 +191,16 @@ static void	writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client
 	if ((unsigned long)nBytesSent < (c->getResponse()).size())
 		std::cout << "Server " << getServName(configFromFd[c->getListenFd()]) 
 			<< ": error while sending data to sock #" << fd << ", request ignored." << std::endl; // should add client info here
+	else	
+		std::cout << "=== Server " << getServName(configFromFd[c->getListenFd()]) << " sent response below to sock " << fd
+			<< std::endl << c-> getResponse() << "\n==================" << std::endl; //tmp for debug
+
 	c->setFlagResponse(false);
 	c->clearResponse(); // needed?
 	if (c->getFlagCloseAfterWrite())
 	{	
+		std::cout << " === Server " << getServName(configFromFd[c->getListenFd()]) 
+			<< " closing connection with sock " << fd << "===" << std::endl;
 		close(fd);
 		FD_CLR(fd, &fdSets->main);
 		delete c;
@@ -303,7 +309,7 @@ static void	processRequest(Client* client, Config *config)
 		}
 
 	}
-	std::cout << "==== Response ====" << std::endl << response.to_string() << "\n==================" << std::endl; //tmp for debug
+	std::cout << "==== Prepared response ====" << std::endl << response.to_string() << "\n==================" << std::endl; //tmp for debug
 	client->setResponse(response.to_string());
 	//client->clearRequestBuff();
 	client->clearRequest();
