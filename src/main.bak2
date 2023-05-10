@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/10 12:03:12 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/09 16:58:17 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 	int				listenSockFds[nbServ];
 	t_fdSets		fdSets; // Struct with the sets of FDs to be monit. with select
 	struct timeval	timeOut; // Max time for select to return if no socket has updates
-	Config*			configFromFd[FD_SETSIZE] = {}; // only valid for listenFds (1 port = 1 fixed listenFd)
+	Config*			configFromFd[FD_SETSIZE] = {};
 	Client*			clientArray[FD_SETSIZE] = {};
 
 	timeOut.tv_sec = 5;
@@ -147,7 +147,7 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		handleNewConnection(fd, fdSets, clientArray, configFromFd[fd]);
 		return ;
 	}
-	std::cout << "=== Server " << getServName(configFromFd[clientArray[fd]->getListenFd()])
+	std::cout << "Server " << getServName(configFromFd[clientArray[fd]->getListenFd()]) 
 		<< ": receiving data on sock #" << fd << ":" << std::endl;
 	
 	int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
@@ -164,7 +164,7 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		return ;
 	}
 	clientArray[fd]->setNBytesRequest(nBytesRead);
-	std::cout << clientArray[fd]->getRequestBuff() << "===" << std::endl; // tmp
+	std::cout << clientArray[fd]->getRequestBuff() << std::endl; // tmp
 	processRequest(clientArray[fd], configFromFd[clientArray[fd]->getListenFd()]);
 	return ;
 }
@@ -275,12 +275,12 @@ static void	processRequest(Client* client, Config *config)
 		} 
 		else
 		{
-			response.set_version("HTTP/1.1");
+			response.set_version(request.get_version());
 			response.set_status(405, "Method Not Allowed");
 		}
 
 	}
-	std::cout << "==== Response ====" << std::endl << response.to_string() << "\n==================" << std::endl; //tmp for debug
+	std::cout << response.to_string() << std::endl; //tmp for debug
 	client->setResponse(response.to_string());
 	client->clearRequestBuff();
 	return ;
