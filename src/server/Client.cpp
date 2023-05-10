@@ -6,18 +6,19 @@
 /*   By: tplanes <tplanes@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 18:22:48 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/09 15:24:51 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/10 14:42:50 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 
 // Warning, shouldnt use accessor for _addr here (possible cast issue)
-Client::Client(void) : _fd(-1), _addrSize(sizeof(this->_addr)), _nBytesRequest(0),
+//Client::Client(void) : _fd(-1), _addrSize(sizeof(this->_addr)), _nBytesRequest(0),
+Client::Client(void) : _fd(-1), _addrSize(sizeof(this->_addr)), _nBytesRec(0),
 	_flagResponse(false), _flagCloseAfterWrite(false) 
 {
 	std::cout << "Client default constructor called" << std::endl;
-	this->clearRequestBuff();
+	//this->clearRequestBuff();
 	return ;
 }
 
@@ -39,14 +40,16 @@ int	Client::getListenFd(void) const
 	return (this->_listenFd);
 }
 
-char*	Client::getRequestBuff(void)
+//char*	Client::getRequestBuff(void)
+std::string&	Client::getRequest(void)
 {
 	return (this->_request);
 }
 
-int	Client::getNBytesRequest(void) const
+//int	Client::getNBytesRequest(void) const
+int	Client::getNBytesRec(void) const
 {
-	return (this->_nBytesRequest);
+	return (this->_nBytesRec);
 }
 
 struct sockaddr*	Client::getAddr(void)
@@ -74,9 +77,11 @@ bool	Client::getFlagCloseAfterWrite(void) const
 	return (this->_flagCloseAfterWrite);
 }
 
-void	Client::clearRequestBuff(void)
+//void	Client::clearRequestBuff(void)
+void	Client::clearRequest(void)
 {
-	memset(this->getRequestBuff(), 0, BUFFSIZE);
+	//memset(this->getRequestBuff(), 0, BUFFSIZE);
+	(this->getRequest()).clear();
 	return ;
 }
 
@@ -92,9 +97,10 @@ void	Client::setListenFd(int fd)
 	return ;
 }
 
-void	Client::setNBytesRequest(int nBytesRequest)
+//void	Client::setNBytesRequest(int nBytesRequest)
+void	Client::setNBytesRec(int nBytesRec)
 {
-	this->_nBytesRequest = nBytesRequest;
+	this->_nBytesRec = nBytesRec;
 	return ;
 }
 

@@ -6,7 +6,7 @@
 /*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:23:23 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/09 12:41:06 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/10 14:23:40 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,10 @@
 
 //# define PORT "8080" //replaced by config->port
 # define BACKLOG 5 // number of connections allowed on incoming queue
-# define BUFFSIZE 2048 // size of read buffer containing request
+//# define BUFFSIZE 2048 // size of read buffer containing request
+# define MAX_HEADER_SIZE 2048 // max size of header in received request
+# define MAX_BODY_SIZE 4096 // max size of body in received request (to be replaced by config value)
+
 //# define FD_SETSIZE 1024 // how to overide the default higher value? (should test what happens if pass limit)
 
 #define DEFAULT_CONFIG_FILE_PATH "./config/default.yaml"

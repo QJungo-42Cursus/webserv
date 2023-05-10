@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/10 12:03:12 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/10 15:26:46 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,8 @@ static void		writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Clien
 static void		processRequest(Client* client, Config *config);
 
 static std::string	getServName(Config *config);
+
+static bool	isRequestComplete(std::string const& request);
 
 int main(int argc, char **argv)
 {
@@ -150,7 +152,12 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 	std::cout << "=== Server " << getServName(configFromFd[clientArray[fd]->getListenFd()])
 		<< ": receiving data on sock #" << fd << ":" << std::endl;
 	
-	int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
+	int		bufSize = MAX_HEADER_SIZE + MAX_BODY_SIZE + 1; // shld replace max body size by config value (should also protect against stack overflow?)
+	//char	buf[bufSize] = {}; // better to use a static one and clear it each time ?
+	char	buf[MAX_HEADER_SIZE + MAX_BODY_SIZE + 1] = {}; // better to use a static one and clear it each time ?
+	
+	//int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
+	int nBytesRead = recv(fd, buf, bufSize, 0);
 	if (nBytesRead <= 0)
 	{
 		if (nBytesRead == 0) // should add more serv and client info
@@ -163,8 +170,12 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		clientArray[fd] = NULL;
 		return ;
 	}
-	clientArray[fd]->setNBytesRequest(nBytesRead);
-	std::cout << clientArray[fd]->getRequestBuff() << "===" << std::endl; // tmp
+	(clientArray[fd]->getRequest()).append(buf, nBytesRead);
+	clientArray[fd]->setNBytesRec(nBytesRead);
+	
+	//clientArray[fd]->setNBytesRequest(nBytesRead);
+	std::cout << buf << "===" << std::endl; // tmp
+	//std::cout << clientArray[fd]->getRequestBuff() << "===" << std::endl; // tmp
 	processRequest(clientArray[fd], configFromFd[clientArray[fd]->getListenFd()]);
 	return ;
 }
@@ -245,23 +256,34 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 
 static void	processRequest(Client* client, Config *config)
 {
-	client->setFlagResponse(true);
-	//client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
+	int max_size = MAX_HEADER_SIZE + MAX_BODY_SIZE; 
 	
 	// Create a new response
 	HttpResponse response;
+	client->setFlagResponse(true); //set to true by default and switch off if necessary
 	
-	if (client->getNBytesRequest() >= BUFFSIZE)
-		response.set_status(400, "Bad Request: too big.");
-	else 
+	if (client->getNBytesRec() >= max_size || (client->getRequest()).size() >= max_size) // only last check sufficient?
 	{
-		std::string rawRequest(client->getRequestBuff());
-		HttpRequest request(rawRequest);
+		response.set_version("HTTP/1.1"); // should send error page instead?
+		response.set_status(400, "Bad Request: too big.");
+		client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
+	}
+	else if (!isRequestComplete(client->getRequest()))
+	{
+		client->setFlagResponse(false);
+		std::cout << "=== Request incomplete: server keeps reading...===" << std::endl;
+		return ;
+	}
+	else
+	{
+		//std::string rawRequest(client->getRequestBuff());
+		//HttpRequest request(rawRequest);
+		HttpRequest request(client->getRequest());
 
 		if (request.get_method() == Http::Methods::GET) 
 		{
 			GetRequestHandler get_handler(config);
-			response = get_handler.handle_request(request); //error or bad request not showing up on browser, need more info or content !=0
+			response = get_handler.handle_request(request);
 		}
 		else if (request.get_method() == Http::Methods::POST)
 		{
@@ -277,11 +299,25 @@ static void	processRequest(Client* client, Config *config)
 		{
 			response.set_version("HTTP/1.1");
 			response.set_status(405, "Method Not Allowed");
+			client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
 		}
 
 	}
 	std::cout << "==== Response ====" << std::endl << response.to_string() << "\n==================" << std::endl; //tmp for debug
 	client->setResponse(response.to_string());
-	client->clearRequestBuff();
+	//client->clearRequestBuff();
+	client->clearRequest();
 	return ;
+}
+
+// check if complete header at the moment
+static bool	isRequestComplete(std::string const& request)
+{
+	std::string const	ending("\r\n\r\n");
+
+	if (request.length() < ending.length())
+		return (false);
+	if (request.compare(request.length() - ending.length(), ending.length(), ending) == 0)
+		return (true);
+	return (false);
 }
