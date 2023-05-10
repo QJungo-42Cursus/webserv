@@ -1,22 +1,20 @@
-servers: # liste de serveurs
-  - server: # un serveur
-      server_name: domain1.com # nom du serveur (optionnel)
-      port: 8080 # port du serveur (optionnel, default: 80)
-      error_pages: # liste des pages d'erreur par defaut (optionnel)
+servers:
+  - server:
+      server_name: domain1.com
+      port: 8080
+      error_pages:
         - 404: ./404.html
-      client_max_body_size: 10m # taille max des requetes en megaoctets (optionnel, default: 1m TODO: 1m ?)
-      routes: # liste des routes du serveur (optionnel ?)
+      client_max_body_size: 10m
+      routes:
         - /:
-            methods: GET # methodes autorisees par la route (optionnel, default: GET)
+            methods: GET
+            root: PWD/www/ # pour l'instant ca crash si on le met pas
+            index: youpi.bla # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
         - /post_body:
             methods: POST
-            root: PWD/www/
             client_max_body_size: 1m # l'eval demande "100"
         - /directory/:
             methods: GET
             root: PWD/YoupiBanane/
             repertory_listing: true
             index: youpi.bad_extension
-  - server:
-      server_name: domain2.com
-      port: 8080
