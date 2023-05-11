@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/11 15:18:07 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/11 15:33:21 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -335,22 +335,23 @@ static bool	isRequestComplete(std::string const& requestStr)
 		return (true); //we only accept body with POST method
 	//Note, if two requests are sent in same chunk, the second one would be ignored 
 	
-		
+	std::map<std::string, std::string> headerMap = request.get_headers();
 	
-	if (map.count("Content-Length"))	//note: in therory should be case insensitive 
+	if (headerMap.count("Content-Length"))	//note: in therory should be case insensitive 
 	{
-		unsigned int bodySize = atoi(map["Content-Length"].c_str()); // return error here 
-																	 // if >maxbody size?
+		unsigned int bodySize = atoi(headerMap["Content-Length"].c_str()); // return err here 
+																	     // if >maxbody size?
 		// leaves error treatment to Quentin's parser atm
 		if (bodySize > MAX_BODY_SIZE)
-			bodySize = MAX_BODY_SIZE
-		if (body.length() < size)
+			bodySize = MAX_BODY_SIZE;
+		if (body.length() < bodySize)
 			return (false);
+		return (true);
 	}	
-
-	if (map.count("Transfer-Encoding") && map["Transfer-Encoding"].compare("chunked"))	
+	else if (headerMap.count("Transfer-Encoding")
+		&& headerMap["Transfer-Encoding"].compare("chunked"))	
 	{
-		if (!isChunkedBodyComplete(body))
+		if (isChunkedBodyComplete(body))
 			return (true);
 		return (false);
 	}
@@ -372,7 +373,7 @@ static bool	isHeaderComplete(std::string const& requestStr, std::string& header,
 	if (pos != std::string::npos)
 	{
 		header = requestStr.substr(0, pos + ending.length());
-		std::cout << "PARSED FULL HEADER=<" << header << ">" << std::endl;
+		std::cout << "===PARSED FULL HEADER BELOW===\n" << header << "===" << std::endl;
 		if (requestStr.length() > header.length())
 			body = requestStr.substr(pos + ending.length());
 		return (true);
@@ -390,7 +391,8 @@ static bool	isChunkedBodyComplete(std::string& body)
 	pos = body.find(ending, 0);
 	if (pos != std::string::npos)
 	{
-		std::cout << "===END OF CHUNKED BODY DETECTED===" <<std::endl;
+		std::cout << "===END OF CHUNKED BODY (BELOW) DETECTED===\n"
+			<< body << "===" << std::endl;
 		return (true);
 	}
 	return (false);
