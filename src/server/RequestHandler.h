@@ -17,7 +17,6 @@ protected:
     bool is_method_allowed(const Route* route, const HttpRequest& request);
     std::string create_error_html(int error_code, const std::string& error_phrase) const;
     HttpResponse handle_error(int error_code, const std::string& error_phrase);
-
 };
 
 class GetRequestHandler : public RequestHandler {
@@ -33,13 +32,5 @@ public:
 
     virtual HttpResponse handle_request(const HttpRequest& request);
 };
-
-class DeleteRequestHandler : public RequestHandler {
-public:
-    DeleteRequestHandler(const Config* config);
-
-    virtual HttpResponse handle_request(const HttpRequest& request);
-};
-
 
 #endif

@@ -6,10 +6,9 @@
 #include "../server/HttpResponse.h"
 #include "../config/Config.h"
 
-class CgiExecutor
-{
+class CgiExecutor {
 public:
-	std::string execute(const HttpRequest& request, const Config& config);
+    static std::string execute(const HttpRequest &request, const Config &config, const CgiConfig &cgi_config);
 };
 
 #endif //CGIEXECUTOR_H
