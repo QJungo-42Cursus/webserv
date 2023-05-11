@@ -16,5 +16,4 @@ servers:
         - /directory/:
             methods: GET
             root: PWD/YoupiBanane/
-            repertory_listing: true
             index: youpi.bad_extension

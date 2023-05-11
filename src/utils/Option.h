@@ -63,6 +63,48 @@ public:
 		return os;
 	}
 
+	bool operator==(const Option<T> &other) const
+	{
+		if (_isSome != other._isSome)
+			return false;
+		if (_isSome)
+			return _value == other._value;
+		return true;
+	}
+
+	bool operator!=(const Option<T> &other) const
+	{
+		return !(*this == other);
+	}
+
+	bool operator>(const Option<T> &other) const
+	{
+		if (_isSome != other._isSome)
+			return _isSome;
+		if (_isSome)
+			return _value > other._value;
+		return false;
+	}
+
+	bool operator<(const Option<T> &other) const
+	{
+		if (_isSome != other._isSome)
+			return !_isSome;
+		if (_isSome)
+			return _value < other._value;
+		return false;
+	}
+
+	bool operator>=(const Option<T> &other) const
+	{
+		return !(*this < other);
+	}
+
+	bool operator<=(const Option<T> &other) const
+	{
+		return !(*this > other);
+	}
+
 private:
 	bool _isSome;
 	T _value;

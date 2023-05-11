@@ -15,8 +15,7 @@ CgiConfig CgiConfig::parse(std::string &cgi_config)
 	return config;
 }
 
-std::ostream &operator<<(std::ostream &os, const CgiConfig &config)
+void CgiConfig::log() const
 {
-	os << "CgiConfig(" << config.file_extension << ", " << config.cgi_path << ")";
-	return os;
+	std::cout << "CgiConfig(" << file_extension << ", " << cgi_path << ")";
 }

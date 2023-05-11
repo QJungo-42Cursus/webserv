@@ -2,6 +2,11 @@
 #include "Route.h"
 #include "yaml_helper.h"
 
+const short Route::DEFAULT::METHODS = Http::Methods::GET;
+const bool Route::DEFAULT::REPERTORY_LISTING = false;
+const Option<std::string> Route::DEFAULT::INDEX = Option<std::string>::Some("index.html");
+const Option<std::string> Route::DEFAULT::ROOT = Option<std::string>::Some("PWD/www/");
+
 Route *Route::parse(std::string &route_config)
 {
 	Route *route = new Route();
@@ -53,11 +58,14 @@ Route *Route::parse(std::string &route_config)
 void Route::log() const
 {
 	std::cout << "methods: " << methods << ", redirection: " << redirection << ", root: " << root
-			  << ", repertory_listing: " << repertory_listing << ", index: " << index << ", cgi: " << cgi
-			  << ", upload_directory: " << upload_directory << std::endl;
+			  << ", repertory_listing: " << repertory_listing << ", index: " << index << ", cgi: ";
+	if (cgi.isSome())
+		cgi.unwrap().log();
+	else
+		std::cout << "None";
+	std::cout << ", upload_directory: " << upload_directory << std::endl;
 }
 
-const short Route::DEFAULT::METHODS = Http::Methods::GET;
-const bool Route::DEFAULT::REPERTORY_LISTING = false;
-const Option<std::string> Route::DEFAULT::INDEX = Option<std::string>::Some("index.html");
-const Option<std::string> Route::DEFAULT::ROOT = Option<std::string>::Some("PWD/www/");
+Route::~Route()
+{}
+
