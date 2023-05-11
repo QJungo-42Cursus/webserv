@@ -5,7 +5,7 @@
 
 class DeleteRequestHandler : public RequestHandler {
 public:
-    DeleteRequestHandler(const Config *config);
+    explicit DeleteRequestHandler(const Config *config);
 
     virtual HttpResponse handle_request(const HttpRequest &request);
 };
