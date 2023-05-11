@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "webserv.hpp"
+#include "./server/request_handler/DeleteRequestHandler.h"
 
 static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
@@ -304,7 +305,7 @@ static void	processRequest(Client* client, Config *config)
 		else if (request.get_method() == Http::Methods::DELETE)
 		{
 			DeleteRequestHandler delete_handler(config);
-			response = delete_handler.handle_request(request);
+			std::string response_str = delete_handler.handle_request_str(request);
 		} 
 		else
 		{
