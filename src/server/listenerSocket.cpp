@@ -51,7 +51,7 @@ static void	fillServInfo(struct addrinfo** serverInfo, Config *config)
 	std::string			port;
 	struct addrinfo		hints; // Connection type(s) and IP type(s) we allow
 	
-	ss << config->port.unwrap(); // need try catch in case None?
+	ss << config->port; // need try catch in case None?
 	port = ss.str();
 	memset(&hints, 0, sizeof(hints)); // init to empty
 	hints.ai_family = AF_UNSPEC;     // either IPv4 or IPv6

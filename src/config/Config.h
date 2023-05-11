@@ -37,7 +37,7 @@ public:
 	~Config();
 
 	Option<std::string> server_name;
-	Option<int> port;
+	int port;
 	Option<unsigned int> client_max_body_size;
 	std::map<int, std::string> error_pages;
 	std::map<std::string, Route *> routes;

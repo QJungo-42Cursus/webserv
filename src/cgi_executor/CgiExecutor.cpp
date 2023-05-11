@@ -30,10 +30,10 @@ static std::map<std::string, std::string> get_env(const HttpRequest &request, co
 	/// request related
 	env["SERVER_PROTOCOL"] = request.get_version();
 	env["SERVER_PORT"] = "80";
-	if (config.port.isSome())
+	if (config.port)
 	{
 		std::stringstream port("");
-		port << config.port.unwrap();
+		port << config.port;
 		env["SERVER_PORT"] = port.str();
 	}
 	int method = request.get_method();

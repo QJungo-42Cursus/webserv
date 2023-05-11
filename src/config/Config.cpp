@@ -164,7 +164,7 @@ std::vector<Config *> Config::parse_servers(const std::string &path) {
     }
 
     /// Parse each server
-    std::set<Option<int> > ports;
+    std::set<int> ports;
     std::vector<Config *> configs;
     for (std::vector<std::string>::iterator it = servers.begin(); it != servers.end(); ++it) {
         Config *config = parse(*it);
@@ -305,6 +305,7 @@ static std::map<std::string, Route *> parse_routes(std::string &str) {
     return map;
 }
 
+
 Config *Config::parse(std::string &server_config) {
     Config *config = new Config();
     {
@@ -312,27 +313,13 @@ Config *Config::parse(std::string &server_config) {
         if (line.isSome())
             config->server_name = Option<std::string>::Some(get_value_from_line(line.unwrap()));
     }
-    {
-        Option<std::string> line = find_key_value_line(server_config, "client_max_body_size", true);
-        if (line.isSome()) {
-            std::string value = get_value_from_line(line.unwrap());
-            char unit = value[value.size() - 1];
-            if (unit != 'm' && unit != 'k')
-                throw std::runtime_error("Invalid config file, client_max_body_size must be in the form '10m'/'10k'");
-            unsigned int size = std::atoi(value.substr(0, value.size() - 1).c_str());
-            if (size == 0)
-                throw std::runtime_error("Invalid config file, client_max_body_size must be in the form '10m'/'10k'");
-            if (unit == 'm')
-                size *= 1024 * 1024;
-            else
-                size *= 1024;
-            config->client_max_body_size = Option<unsigned int>::Some(size);
-        }
-    }
+    config->client_max_body_size = get_client_max_body_size(server_config);
     {
         Option<std::string> line = find_key_value_line(server_config, "port", true);
         if (line.isSome())
-            config->port = Option<int>::Some(std::atoi(get_value_from_line(line.unwrap()).c_str()));
+            config->port = (std::atoi(get_value_from_line(line.unwrap()).c_str()));
+        else
+            config->port = Config::Default::PORT;
     }
     {
         Option<std::string> line = find_key_value_line(server_config, "methods", true);

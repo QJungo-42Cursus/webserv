@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 		if (listenSockFds[iServ] > fdSets.fdMax)
 			fdSets.fdMax = listenSockFds[iServ];
 		std::cout << "Server " << (configs[iServ]->server_name).unwrap() << ": ready, listening on port "
-			<< (configs[iServ]->port).unwrap() << std::endl;
+			<< (configs[iServ]->port) << std::endl;
 	}
 
 	// Main loop
@@ -138,7 +138,7 @@ static std::string	getServName(Config* config)
 	std::stringstream	ss;
 
 	ss << config->server_name.unwrap() << " (" 
-		<< config->port.unwrap() << ")";
+		<< config->port << ")";
 	return ss.str();
 }
 

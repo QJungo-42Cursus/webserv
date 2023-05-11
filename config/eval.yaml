@@ -12,9 +12,7 @@ servers:
             index: youpi.bla # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
         - /post_body:
             methods: POST
-            client_max_body_size: 1m # l'eval demande "100"
         - /directory/:
             methods: GET
             root: PWD/www/YoupiBanane/
-            repertory_listing: true
             index: youpi.bad_extension
