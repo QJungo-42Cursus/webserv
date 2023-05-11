@@ -8,6 +8,8 @@ public:
     explicit DeleteRequestHandler(const Config *config);
 
     virtual HttpResponse handle_request(const HttpRequest &request);
+
+    std::string handle_request_str(const HttpRequest &request);
 };
 
 #endif // DELETEREQUESTHANDLER_H

@@ -3,17 +3,17 @@
 
 DeleteRequestHandler::DeleteRequestHandler(const Config *config) : RequestHandler(config) {}
 
-HttpResponse DeleteRequestHandler::handle_request(const HttpRequest &request) {
+std::string DeleteRequestHandler::handle_request_str(const HttpRequest &request) {
     HttpResponse response;
     Route *route = find_route(request.get_path());
     if (route == NULL) {
         response.set_status(404, "Not Found");
-        return response;
+        return response.to_string();
     }
 
     if (!is_method_allowed(route, request)) {
         response.set_status(405, "Method Not Allowed");
-        return response;
+        return response.to_string();
     }
 
     if (route->cgi.isSome()) {
@@ -33,5 +33,5 @@ HttpResponse DeleteRequestHandler::handle_request(const HttpRequest &request) {
             response.set_status(200, "OK");
         }
     }
-    return response;
+    return response.to_string();
 }
