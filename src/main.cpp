@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/11 15:14:27 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/11 15:18:07 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ static bool	isRequestComplete(std::string const& request);
 static bool	isHeaderComplete(std::string const& requestStr, std::string& header,
 	std::string& body);
 
-static bool	isChunkedBodyComplete(body);
+static bool	isChunkedBodyComplete(std::string& body);
 
 int main(int argc, char **argv)
 {
@@ -327,7 +327,7 @@ static bool	isRequestComplete(std::string const& requestStr)
 {
 	std::string header, body;
 
-	if (!isHeaderComplete(requestStr, &header, &body))
+	if (!isHeaderComplete(requestStr, header, body))
 		return (false);
 
 	HttpRequest	request(header);
@@ -382,7 +382,7 @@ static bool	isHeaderComplete(std::string const& requestStr, std::string& header,
 
 // Note: this not a perfect way to detect ending
 // there could be some cases where ending sequence exists within chunk 
-static bool	isChunkedBodyComplete(body)
+static bool	isChunkedBodyComplete(std::string& body)
 {
 	std::string const	ending("0\r\n\r\n");
 	std::string::size_type pos;
