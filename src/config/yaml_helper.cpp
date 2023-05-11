@@ -1,6 +1,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cstdlib>
 #include "../utils/Option.h"
 #include "../utils/utils.h"
 #include "../http/http.h"
@@ -70,4 +71,25 @@ std::string unpad_from_left(const std::string &str, size_t padding, bool throw_i
 			result += "\n";
 	}
 	return result;
+}
+
+Option<unsigned int> get_client_max_body_size(std::string &server_config) {
+    Option<std::string> line = find_key_value_line(server_config, "client_max_body_size", true);
+    if (line.isSome()) {
+        std::string value = get_value_from_line(line.unwrap());
+        char unit = value[value.size() - 1];
+        if (unit != 'm' && unit != 'k')
+            throw std::runtime_error("Invalid config file, client_max_body_size must be in the form '10m'/'10k'");
+        unsigned int size = std::atoi(value.substr(0, value.size() - 1).c_str());
+        if (size == 0)
+            throw std::runtime_error("Invalid config file, client_max_body_size must be in the form '10m'/'10k'");
+        if (unit == 'm' && size > 100 || unit == 'k' && size > 100000)
+            throw std::runtime_error("Invalid config file, client_max_body_size must be lower than 100m/100'000k");
+        if (unit == 'm')
+            size *= 1024 * 1024;
+        else
+            size *= 1024;
+        return Option<unsigned int>::Some(size);
+    }
+    return Option<unsigned int>::None();
 }

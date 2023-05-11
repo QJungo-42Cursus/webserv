@@ -9,4 +9,6 @@ Option<short> parse_methods(std::string &str);
 
 std::string unpad_from_left(const std::string &str, size_t padding, bool throw_if_something);
 
+Option<unsigned int> get_client_max_body_size(std::string &server_config);
+
 #endif //YAML_HELPER_H
