@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/11 13:42:04 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/11 15:14:27 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,10 @@ static std::string	getServName(Config *config);
 
 static bool	isRequestComplete(std::string const& request);
 
-static bool	isHeaderComplete(std::string const& requestStr);
+static bool	isHeaderComplete(std::string const& requestStr, std::string& header,
+	std::string& body);
+
+static bool	isChunkedBodyComplete(body);
 
 int main(int argc, char **argv)
 {
@@ -286,17 +289,7 @@ static void	processRequest(Client* client, Config *config)
 	}
 	else
 	{	
-		//std::string rawRequest(client->getRequestBuff());
-		//HttpRequest request(rawRequest);
 		HttpRequest request(client->getRequest());
-		
-		/***************/
-		
-	/*	std::map<std::string, std::string> map = request.get_headers();
-		if (map.count("Content-Length"))
-			val = map["Content-Length"];*/
-
-		/******************/
 		
 		if (request.get_method() == Http::Methods::GET) 
 		{
@@ -317,45 +310,88 @@ static void	processRequest(Client* client, Config *config)
 		{
 			response.set_version("HTTP/1.1");
 			response.set_status(405, "Method Not Allowed");
-			client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
+			client->setFlagCloseAfterWrite(true);
 		}
 
 	}
-	std::cout << "==== Prepared response ====" << std::endl << response.to_string() << "\n==================" << std::endl; //tmp for debug
+	std::cout << "==== Prepared response ====" << std::endl
+		<< response.to_string() << "\n==================" << std::endl; //tmp for debug
 	client->setResponse(response.to_string());
-	//client->clearRequestBuff();
 	client->clearRequest();
 	return ;
 }
 
-// check if complete header at the moment
+// quite some unnecesarry repeated operations in current design...
+// could used flags to avoid
 static bool	isRequestComplete(std::string const& requestStr)
 {
-	if (!isHeaderComplete(requestStr))
+	std::string header, body;
+
+	if (!isHeaderComplete(requestStr, &header, &body))
 		return (false);
+
+	HttpRequest	request(header);
+	if (request.get_method() != Http::Methods::POST) 
+		return (true); //we only accept body with POST method
+	//Note, if two requests are sent in same chunk, the second one would be ignored 
 	
+		
 	
+	if (map.count("Content-Length"))	//note: in therory should be case insensitive 
+	{
+		unsigned int bodySize = atoi(map["Content-Length"].c_str()); // return error here 
+																	 // if >maxbody size?
+		// leaves error treatment to Quentin's parser atm
+		if (bodySize > MAX_BODY_SIZE)
+			bodySize = MAX_BODY_SIZE
+		if (body.length() < size)
+			return (false);
+	}	
 
-	//	HttpRequest request(client->getRequest());
-		
-		/***************/
-		
-	/*	std::map<std::string, std::string> map = request.get_headers();
-		if (map.count("Content-Length"))
-			val = map["Content-Length"];*/
-
-
+	if (map.count("Transfer-Encoding") && map["Transfer-Encoding"].compare("chunked"))	
+	{
+		if (!isChunkedBodyComplete(body))
+			return (true);
+		return (false);
+	}
+	// if neither content-length nor chunk are specified, does not expect body 
 	return (true);	
 }
 
-static bool	isHeaderComplete(std::string const& requestStr)
+static bool	isHeaderComplete(std::string const& requestStr, std::string& header,
+	std::string& body)
 {
 	std::string const	ending("\r\n\r\n");
-
+	std::string::size_type pos;
+	
 	//if (requestStr.length() < ending.length())
 	//	return (false);
 	//if (request.compare(request.length() - ending.length(), ending.length(), ending) == 0)
-	if (requestStr.find(ending, 0) != std::string::npos)
+	
+	pos = requestStr.find(ending, 0);
+	if (pos != std::string::npos)
+	{
+		header = requestStr.substr(0, pos + ending.length());
+		std::cout << "PARSED FULL HEADER=<" << header << ">" << std::endl;
+		if (requestStr.length() > header.length())
+			body = requestStr.substr(pos + ending.length());
 		return (true);
+	}
+	return (false);
+}
+
+// Note: this not a perfect way to detect ending
+// there could be some cases where ending sequence exists within chunk 
+static bool	isChunkedBodyComplete(body)
+{
+	std::string const	ending("0\r\n\r\n");
+	std::string::size_type pos;
+	
+	pos = body.find(ending, 0);
+	if (pos != std::string::npos)
+	{
+		std::cout << "===END OF CHUNKED BODY DETECTED===" <<std::endl;
+		return (true);
+	}
 	return (false);
 }
