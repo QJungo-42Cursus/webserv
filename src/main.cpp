@@ -29,23 +29,28 @@ static std::string getServName(Config *config);
 
 static bool isRequestComplete(std::string const &request);
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 
-    if (argc > 2) {
+    if (argc > 2)
+    {
         std::cerr << "Usage: " << argv[0] << " [path/to/file.conf]" << std::endl;
         exit(EXIT_FAILURE);
     }
     std::vector<Config *> configs;
-    try {
+    try
+    {
         configs = argc == 1 ? Config::parse_servers(DEFAULT_CONFIG_FILE_PATH) : Config::parse_servers(argv[1]);
     }
-    catch (std::exception &e) {
+    catch (std::exception &e)
+    {
         std::cerr << e.what() << std::endl;
         exit(EXIT_FAILURE);
     }
 
     std::cout << "Starting webserv with " << configs.size() << " server(s) : " << std::endl;
-    for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it) {
+    for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
+    {
         std::cout << "====================" << std::endl;
         (*it)->log();
         std::cout << std::endl;
@@ -68,7 +73,8 @@ int main(int argc, char **argv) {
     fdSets.fdMax = 0;
 
     // Get one listening socket per "server"
-    for (int iServ = 0; iServ < nbServ; iServ++) {
+    for (int iServ = 0; iServ < nbServ; iServ++)
+    {
         listenSockFds[iServ] = getListenSock(configs[iServ]);
         configFromFd[listenSockFds[iServ]] = configs[iServ];
         FD_SET(listenSockFds[iServ], &fdSets.main); // adds the listening sock to the set
@@ -79,17 +85,20 @@ int main(int argc, char **argv) {
     }
 
     // Main loop
-    while (true) {
+    while (true)
+    {
         // Poll sockets with select
         // if (pollSockets(&fdSets, &timeOut) == 0)
         (void) timeOut;
-        if (pollSockets(&fdSets, NULL) == 0) {
+        if (pollSockets(&fdSets, NULL) == 0)
+        {
             std::cout << "Timeout while polling sockets with select..." << std::endl;
             continue;
         }
 
         // Check sockets for errors or read/write readyness
-        for (int fd = 0; fd <= fdSets.fdMax; fd++) {
+        for (int fd = 0; fd <= fdSets.fdMax; fd++)
+        {
             if (FD_ISSET(fd, &fdSets.error))
                 handleSockError(fd, configFromFd, &fdSets.main, clientArray);
             else if (FD_ISSET(fd, &fdSets.read))
@@ -105,7 +114,8 @@ int main(int argc, char **argv) {
     return (0);
 }
 
-static void handleSockError(int fd, Config *configFromFd[], fd_set *mainFdSet, Client *clientArray[]) {
+static void handleSockError(int fd, Config *configFromFd[], fd_set *mainFdSet, Client *clientArray[])
+{
     if (configFromFd[fd]) // if fd is a listening socket
     {
         std::cout << "Server " << getServName(configFromFd[fd])
@@ -124,7 +134,8 @@ static void handleSockError(int fd, Config *configFromFd[], fd_set *mainFdSet, C
     return;
 }
 
-static std::string getServName(Config *config) {
+static std::string getServName(Config *config)
+{
     std::stringstream ss;
 
     ss << config->server_name.unwrap() << " ("
@@ -132,7 +143,8 @@ static std::string getServName(Config *config) {
     return ss.str();
 }
 
-static void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[]) {
+static void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[])
+{
     if (configFromFd[fd]) // if fd corresponds to a listening socket
     {
         handleNewConnection(fd, fdSets, clientArray, configFromFd[fd]);
@@ -148,7 +160,8 @@ static void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client 
 
     //int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
     int nBytesRead = recv(fd, buf, bufSize, 0);
-    if (nBytesRead <= 0) {
+    if (nBytesRead <= 0)
+    {
         if (nBytesRead == 0) // should add more serv and client info
             std::cout << "Client on sock #" << fd << " closed the connection." << std::endl;
         else
@@ -169,7 +182,8 @@ static void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client 
     return;
 }
 
-static void writeSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[]) {
+static void writeSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[])
+{
     Client *c = clientArray[fd];
 
     if (configFromFd[fd]) // This should never happen (cannot write to listening socket)
@@ -187,7 +201,8 @@ static void writeSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client
 
     c->setFlagResponse(false);
     c->clearResponse(); // needed?
-    if (c->getFlagCloseAfterWrite()) {
+    if (c->getFlagCloseAfterWrite())
+    {
         std::cout << " === Server " << getServName(configFromFd[c->getListenFd()])
                   << " closing connection with sock " << fd << "===" << std::endl;
         close(fd);
@@ -199,7 +214,8 @@ static void writeSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client
 }
 
 
-static void handleNewConnection(int listenSockFd, t_fdSets *fdSets, Client *clientArray[], Config *config) {
+static void handleNewConnection(int listenSockFd, t_fdSets *fdSets, Client *clientArray[], Config *config)
+{
     Client *tmpClient = new Client();
     int connectSockFd;
 
@@ -208,11 +224,14 @@ static void handleNewConnection(int listenSockFd, t_fdSets *fdSets, Client *clie
     connectSockFd = accept(listenSockFd,
                            tmpClient->getAddr(), tmpClient->getAddrSize());
 
-    if (connectSockFd == -1) {
+    if (connectSockFd == -1)
+    {
         std::cout << "Server " << getServName(config)
                   << ": could not accept new connection." << std::endl;
         delete tmpClient;
-    } else {
+    }
+    else
+    {
         tmpClient->setFd(connectSockFd);
         tmpClient->setListenFd(listenSockFd);
         clientArray[connectSockFd] = tmpClient;
@@ -228,14 +247,16 @@ static void handleNewConnection(int listenSockFd, t_fdSets *fdSets, Client *clie
     return;
 }
 
-static int pollSockets(t_fdSets *fdSets, struct timeval *timeOut) {
+static int pollSockets(t_fdSets *fdSets, struct timeval *timeOut)
+{
     // Should check that this does a proper deep copy
     fdSets->read = fdSets->write = fdSets->error = fdSets->main;
 
     // Checks which socks are ready for read/write or error
     int selectRetVal = select(fdSets->fdMax + 1, &fdSets->read, &fdSets->write,
                               &fdSets->error, timeOut);
-    if (selectRetVal == -1) {
+    if (selectRetVal == -1)
+    {
         std::cout << "Error while polling with select, server will shutdown in 5s..." << std::endl;
         sleep(5);
         exit(EXIT_FAILURE); // (should free Clients first) should implement main proc to reboot...
@@ -243,7 +264,8 @@ static int pollSockets(t_fdSets *fdSets, struct timeval *timeOut) {
     return (selectRetVal);
 }
 
-static void processRequest(Client *client, Config *config) {
+static void processRequest(Client *client, Config *config)
+{
     int max_size = MAX_HEADER_SIZE + MAX_BODY_SIZE;
 
     // Create a new response
@@ -255,27 +277,38 @@ static void processRequest(Client *client, Config *config) {
         response.set_version("HTTP/1.1"); // should send error page instead?
         response.set_status(400, "Bad Request: too big.");
         client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
-    } else if (!isRequestComplete(client->getRequest())) {
+    }
+    else if (!isRequestComplete(client->getRequest()))
+    {
         client->setFlagResponse(false);
         std::cout << "=== Request incomplete: server keeps reading...===" << std::endl;
         return;
-    } else {
+    }
+    else
+    {
         //std::string rawRequest(client->getRequestBuff());
         //HttpRequest request(rawRequest);
         HttpRequest request(client->getRequest());
 
-        if (request.get_method() == Http::Methods::GET) {
+        if (request.get_method() == Http::Methods::GET)
+        {
             GetRequestHandler get_handler(config);
             response = get_handler.handle_request(request);
             response_string = response.to_string();
-        } else if (request.get_method() == Http::Methods::POST) {
+        }
+        else if (request.get_method() == Http::Methods::POST)
+        {
             PostRequestHandler post_handler(config);
             response = post_handler.handle_request(request);
             response_string = response.to_string();
-        } else if (request.get_method() == Http::Methods::DELETE) {
+        }
+        else if (request.get_method() == Http::Methods::DELETE)
+        {
             DeleteRequestHandler delete_handler(config);
             response_string = delete_handler.handle_request_str(request);
-        } else {
+        }
+        else
+        {
             response.set_version("HTTP/1.1");
             response.set_status(405, "Method Not Allowed");
             client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
@@ -291,7 +324,8 @@ static void processRequest(Client *client, Config *config) {
 }
 
 // check if complete header at the moment
-static bool isRequestComplete(std::string const &request) {
+static bool isRequestComplete(std::string const &request)
+{
     std::string const ending("\r\n\r\n");
 
     if (request.length() < ending.length())
