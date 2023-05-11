@@ -10,23 +10,20 @@ RequestHandler::RequestHandler(const Config *config) : config_(config)
 
 Route *RequestHandler::find_route(const std::string &requested_path) const
 {
-	// TODO la question: est-ce que '/admin/user/id' fait parti de la route '/admin/' ?
-	// 	Si oui, que faire si '/admin/' et '/admin/user/' sont tous les deux des routes ?
-	std::map<std::string, Route *>::const_iterator it;
-	for (it = config_->routes.begin(); it != config_->routes.end(); ++it)
-	{
-		std::size_t req_len = requested_path.length();
-		if (req_len > it->first.length())
-			continue;
-		if (requested_path.find(it->first) == 0)
-		{
-			std::cout << "find_route: " << it->first <<
-					  " for requested_path: " << requested_path <<
-					  std::endl;
-			return it->second;
-		}
-	}
-	return 0;
+    std::map<std::string, Route *>::const_iterator it;
+    Route* closest_route = NULL;
+    size_t closest_match_length = 0;
+
+    for (it = config_->routes.begin(); it != config_->routes.end(); ++it)
+    {
+        std::size_t route_len = it->first.length();
+        if (requested_path.find(it->first) == 0 && route_len > closest_match_length)
+        {
+            closest_route = it->second;
+            closest_match_length = route_len;
+        }
+    }
+    return closest_route;
 }
 
 bool RequestHandler::is_method_allowed(const Route *route, const HttpRequest &request)
