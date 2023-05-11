@@ -334,6 +334,11 @@ Config *Config::parse(std::string &server_config) {
         if (line.isSome())
             config->port = Option<int>::Some(std::atoi(get_value_from_line(line.unwrap()).c_str()));
     }
+    {
+        Option<std::string> line = find_key_value_line(server_config, "methods", true);
+        if (line.isSome())
+            throw std::runtime_error("Invalid config file, methods are not allowed at server level");
+    }
     config->error_pages = parse_error_pages(server_config);
     config->routes = parse_routes(server_config);
     if (config->routes.empty())
