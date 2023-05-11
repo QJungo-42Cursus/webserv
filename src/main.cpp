@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/10 16:08:20 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/11 13:42:04 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,11 @@
 
 static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
-static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clientArray[], Config* config);
+static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets,
+	Client *clientArray[], Config* config);
 
-static void		handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet, Client* clientArray[]);
+static void		handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet,
+	Client* clientArray[]);
 
 static void		readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[]);
 
@@ -27,6 +29,8 @@ static void		processRequest(Client* client, Config *config);
 static std::string	getServName(Config *config);
 
 static bool	isRequestComplete(std::string const& request);
+
+static bool	isHeaderComplete(std::string const& requestStr);
 
 int main(int argc, char **argv)
 {
@@ -281,11 +285,19 @@ static void	processRequest(Client* client, Config *config)
 		return ;
 	}
 	else
-	{
+	{	
 		//std::string rawRequest(client->getRequestBuff());
 		//HttpRequest request(rawRequest);
 		HttpRequest request(client->getRequest());
+		
+		/***************/
+		
+	/*	std::map<std::string, std::string> map = request.get_headers();
+		if (map.count("Content-Length"))
+			val = map["Content-Length"];*/
 
+		/******************/
+		
 		if (request.get_method() == Http::Methods::GET) 
 		{
 			GetRequestHandler get_handler(config);
@@ -317,13 +329,33 @@ static void	processRequest(Client* client, Config *config)
 }
 
 // check if complete header at the moment
-static bool	isRequestComplete(std::string const& request)
+static bool	isRequestComplete(std::string const& requestStr)
+{
+	if (!isHeaderComplete(requestStr))
+		return (false);
+	
+	
+
+	//	HttpRequest request(client->getRequest());
+		
+		/***************/
+		
+	/*	std::map<std::string, std::string> map = request.get_headers();
+		if (map.count("Content-Length"))
+			val = map["Content-Length"];*/
+
+
+	return (true);	
+}
+
+static bool	isHeaderComplete(std::string const& requestStr)
 {
 	std::string const	ending("\r\n\r\n");
 
-	if (request.length() < ending.length())
-		return (false);
-	if (request.compare(request.length() - ending.length(), ending.length(), ending) == 0)
+	//if (requestStr.length() < ending.length())
+	//	return (false);
+	//if (request.compare(request.length() - ending.length(), ending.length(), ending) == 0)
+	if (requestStr.find(ending, 0) != std::string::npos)
 		return (true);
 	return (false);
 }
