@@ -15,6 +15,6 @@ servers:
             client_max_body_size: 1m # l'eval demande "100"
         - /directory/:
             methods: GET
-            root: PWD/YoupiBanane/
+            root: PWD/www/YoupiBanane/
             repertory_listing: true
             index: youpi.bad_extension
