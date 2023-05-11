@@ -34,12 +34,4 @@ public:
     virtual HttpResponse handle_request(const HttpRequest& request);
 };
 
-class DeleteRequestHandler : public RequestHandler {
-public:
-    DeleteRequestHandler(const Config* config);
-
-    virtual HttpResponse handle_request(const HttpRequest& request);
-};
-
-
 #endif
