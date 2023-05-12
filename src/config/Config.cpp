@@ -300,6 +300,9 @@ static std::map<std::string, Route *> parse_routes(std::string &str) {
             throw std::runtime_error("Invalid config file, a route cannot have both repertory_listing and cgi");
         if (it->second->repertory_listing && it->second->index.isSome())
             throw std::runtime_error("Invalid config file, a route cannot have both repertory_listing and index");
+        char last_char = *(it->first.end() - 1);
+        if (last_char != '/')
+            throw std::runtime_error("Invalid config file, a route with repertory_listing must end with '/' (" + it->first + ")");
     }
 
     return map;
