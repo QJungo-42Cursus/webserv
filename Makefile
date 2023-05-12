@@ -10,6 +10,7 @@ SRCS =			src/main.cpp \
 				src/config/Route.cpp \
 				src/config/yaml_helper.cpp \
 				src/utils/split.cpp \
+				src/utils/get_cwd.cpp \
 				src/server/HttpRequest.cpp \
 				src/server/HttpResponse.cpp \
 				src/server/request_handler/DeleteRequestHandler.cpp \
