@@ -46,7 +46,6 @@ py: all
 	./$(NAME) & python3 tests/client.py
 
 T_NAME =	webserv_tests
-T_CFLAGS =	-Wall -Wextra -Werror -std=c++14
 T_OBJS =		$(T_SRCS:.cpp=.o)
 SAN =	-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all \
 		-fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow \
@@ -67,7 +66,7 @@ endif
 # $(CC) $(T_CFLAGS) $(SAN) $(SRCS) $(T_SRCS) $(GTEST) -o $(NAME)
 
 $(T_NAME): $(T_OBJS)
-	$(CC) $(T_CFLAGS) $(T_OBJS) -D _TEST_  $(SRCS) $(GTEST) -o $(T_NAME)
+	$(CC) $(T_OBJS) -D _TEST_  $(SRCS) $(GTEST) -o $(T_NAME)
 
 t_all: $(T_NAME)
 
