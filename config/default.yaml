@@ -25,7 +25,7 @@ servers: # liste de serveurs
             upload: PWD/www/files/ # racine du telechargement, active l'upload de fichier (optionnel)
         - /admin/:
             methods: GET
-            root: PWD/www/admin/
+            root: PWD/www/admin
             repertory_listing: true
   - server:
       server_name: domain2.com

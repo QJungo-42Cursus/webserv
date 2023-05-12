@@ -91,7 +91,7 @@ Route *RequestHandler::find_route(const std::string &requested_path) const
         std::string route_path = it->first;
 
         // If route_path doesn't end with a '/', append one
-        if (!route_path.empty() && *(requested_path.end() - 1) != '/')
+        if (!route_path.empty() && *(route_path.end() - 1) != '/')
             route_path += '/';
 
         if (modified_request_path.find(route_path) == 0 && route_path.length() > best_route.length())
@@ -283,9 +283,8 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 		if (!is_file && is_directory)
 		{
 			if (route->repertory_listing) {
-				std::cout << "Listing Route: " << file_path << std::endl;
-				std::cout << "Listing path: " << request.get_path() << std::endl;
 				file_path += request.get_path();
+				std::cout << "Listing path: " << file_path << std::endl;
 				response.set_body(dir_listing(file_path, request.get_path()));
 				response.set_status(200, "OK");
 				response.add_header("Content-Type", "text/html");
