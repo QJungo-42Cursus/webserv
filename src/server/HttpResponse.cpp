@@ -1,7 +1,7 @@
 #include "HttpResponse.h"
 #include <sstream>
 
-HttpResponse::HttpResponse() : _status_code(200), _status_description("OK") {}
+HttpResponse::HttpResponse() : _status_code(200), _status_description("OK"), _version("HTTP/1.1") {}
 
 void HttpResponse::set_version(const std::string& version) {
     _version = version;

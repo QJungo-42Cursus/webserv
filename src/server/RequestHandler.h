@@ -17,6 +17,7 @@ protected:
     bool is_method_allowed(const Route* route, const HttpRequest& request);
     std::string create_error_html(int error_code, const std::string& error_phrase) const;
     HttpResponse handle_error(int error_code, const std::string& error_phrase);
+    Option<HttpResponse> parse(const HttpRequest& request);
 };
 
 class GetRequestHandler : public RequestHandler {

@@ -12,7 +12,7 @@ public:
     void set_status(int status_code, const std::string& status_description);
     void add_header(const std::string& header_name, const std::string& header_value);
     void set_body(const std::string& body);
-
+   
     std::string to_string() const;
 
 private:

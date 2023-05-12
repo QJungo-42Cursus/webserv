@@ -3,8 +3,9 @@
 #include <iostream>
 #include <sstream>
 #include "../http/http.h"
+#include "HttpResponse.h"
 
-HttpRequest::HttpRequest(const std::string& raw_request) {
+HttpRequest::HttpRequest(const std::string& raw_request) : raw_(raw_request) {
     parse_request(raw_request);
 }
 
@@ -14,6 +15,10 @@ int HttpRequest::get_method() const {
 
 std::string HttpRequest::get_path() const {
     return path_;
+}
+
+const std::string HttpRequest::get_raw() const {
+    return raw_;
 }
 
 std::string HttpRequest::get_version() const {
