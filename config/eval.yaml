@@ -11,7 +11,7 @@ servers:
             root: PWD/www/ # pour l'instant ca crash si on le met pas
             index: index.html # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
             #index: youpi.bla # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
-        - /post_body:
+        - /post_body/:
             methods: POST
         - /directory/:
             methods: GET
