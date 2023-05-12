@@ -1,15 +1,16 @@
 #include <iostream>
 #include "Route.h"
 #include "yaml_helper.h"
+#include "../utils/utils.h"
 
 const short Route::DEFAULT::METHODS = Http::Methods::GET;
 const bool Route::DEFAULT::REPERTORY_LISTING = false;
 const Option<std::string> Route::DEFAULT::INDEX = Option<std::string>::Some("index.html");
-const Option<std::string> Route::DEFAULT::ROOT = Option<std::string>::Some("PWD/www/");
 
-Route *Route::parse(std::string &route_config) {
+Route *Route::parse(std::string &route_config, std::string const &route_name) {
     Route *route = new Route();
 
+    route->name = route_name;
     route_config = unpad_from_left(route_config, 4, true);
     route->methods = parse_methods(route_config);
     {
@@ -27,6 +28,8 @@ Route *Route::parse(std::string &route_config) {
         Option<std::string> line = find_key_value_line(route_config, "root", true);
         if (line.isSome())
             route->root = Option<std::string>::Some(get_value_from_line(line.unwrap()));
+        else
+            route->root = Option<std::string>::Some(get_cwd() + "/www" + route_name);
     }
     {
         route->repertory_listing = false;
