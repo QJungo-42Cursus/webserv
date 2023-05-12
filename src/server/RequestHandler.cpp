@@ -262,15 +262,19 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 	if (route->root.isSome())
 	{
 		file_path = route->root.unwrap();
+		/*
 		if (file_path.back() == '/')
 			file_path.erase(file_path.size() - 1);
+			*/
 		bool is_file = is_path_file(file_path + request.get_path());
 		bool is_directory = is_path_dir(file_path + request.get_path());
 		if (is_directory && request.get_path().back() != '/') {
 			route = find_route(request.get_path().append("/"));
 			file_path = route->root.unwrap();
+			/*
 			if (file_path.back() == '/')
 				file_path.erase(file_path.size() - 1);
+				*/
 		}
 		std::cout << "Dir: " << is_directory << std::endl;
 		std::cout << "file: " << is_file << std::endl;
@@ -289,6 +293,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 			}
 			else if (route->index.isSome()) {
 				file_path += route->index.unwrap();
+				std::cout << "Index path: " << std::endl;
 			}
 			else {
 				return handle_error(403, "Forbidden");
