@@ -9,6 +9,23 @@ RequestHandler::RequestHandler(const Config *config) : config_(config)
 {
 }
 
+HttpResponse RequestHandler::handle_redirection(const Route* route) {
+    HttpResponse 	response;
+    std::string		response_url;
+	std::string		redirection;
+
+	redirection = route->redirection.unwrap();
+	if (redirection.at(0) == '/')
+		response_url = "http://localhost:8080" + route->redirection.unwrap();
+	else
+		response_url = "http://" + route->redirection.unwrap();
+    response.set_version("HTTP/1.1");
+    response.set_status(302, "Found");
+    response.add_header("Location", response_url);
+	std::cout << "Redirection URL: " << response_url << std::endl;
+    return response;
+}
+
 Option<HttpResponse> RequestHandler::parse(const HttpRequest& request) {
         std::istringstream  request_stream(request.get_raw());
         std::string         method;
@@ -56,24 +73,6 @@ Option<HttpResponse> RequestHandler::parse(const HttpRequest& request) {
         // The request line and headers are well formed
         return Option<HttpResponse>::None();
     }
-/*
-Route *RequestHandler::find_route(const std::string &requested_path) const
-{
-    std::map<std::string, Route *>::const_iterator it;
-    Route* closest_route = NULL;
-    size_t closest_match_length = 0;
-
-    for (it = config_->routes.begin(); it != config_->routes.end(); ++it)
-    {
-        std::size_t route_len = it->first.length();
-        if (requested_path.find(it->first) == 0 && route_len > closest_match_length)
-        {
-            closest_route = it->second;
-            closest_match_length = route_len;
-        }
-    }
-    return closest_route;
-}*/
 
 Route *RequestHandler::find_route(const std::string &requested_path) const
 {
@@ -261,6 +260,10 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
   	std::string route_path;
     std::string route_root;
 
+	if (route->redirection.isSome()) {
+		return handle_redirection(route);
+	}
+
 	if (route->root.isSome())
 	{
 		std::cout << "Route found: " << route->name << std::endl;
@@ -319,7 +322,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 	if (!file) {
 		return handle_error(404, "Not Found");
 	}
-	
+
 	else {
 		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 		response.set_body(content);
