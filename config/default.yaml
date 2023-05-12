@@ -11,8 +11,8 @@ servers: # liste de serveurs
             root: PWD/www/ # racine de la route (optionnel, default: PWD/www/ + url)
             repertory_listing: false # autorise le listing des repertoires (optionnel, default: false)
             index: index.html # page index (optionnel, default: index.html)
-        - /redirect/:
-            redirection: / # redirection de la route (optionnel)
+        - /google/:
+            redirection: http://www.google.com # redirection de la route (optionnel)
         - /new_user/:
             cgi: .py PWD/cgi/python_cgi # cgi 'extension' 'racine du cgi' (optionnel)
             methods: POST
