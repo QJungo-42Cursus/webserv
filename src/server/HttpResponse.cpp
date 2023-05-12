@@ -1,7 +1,19 @@
 #include "HttpResponse.h"
 #include <sstream>
+#include <ctime>
 
-HttpResponse::HttpResponse() : _status_code(200), _status_description("OK"), _version("HTTP/1.1") {}
+std::string get_http_date() {
+    char buffer[1000];
+    time_t now = time(0);
+    struct tm *timeinfo = gmtime(&now);
+
+    strftime(buffer, 1000, "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
+    return buffer;
+}
+
+HttpResponse::HttpResponse() : _status_code(200), _status_description("OK"), _version("HTTP/1.1") {
+    add_header("Date", get_http_date());
+}
 
 void HttpResponse::set_version(const std::string& version) {
     _version = version;
