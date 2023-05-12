@@ -82,7 +82,7 @@ Route *RequestHandler::find_route(const std::string &requested_path) const
     std::string modified_request_path = requested_path;
 
     // If requested_path doesn't end with a '/', append one
-    if (!requested_path.empty() && requested_path.back() != '/')
+    if (!requested_path.empty() && *(requested_path.end() - 1) != '/')
         modified_request_path += '/';
 
     std::map<std::string, Route *>::const_iterator it;
@@ -91,7 +91,7 @@ Route *RequestHandler::find_route(const std::string &requested_path) const
         std::string route_path = it->first;
 
         // If route_path doesn't end with a '/', append one
-        if (!route_path.empty() && route_path.back() != '/')
+        if (!route_path.empty() && *(requested_path.end() - 1) != '/')
             route_path += '/';
 
         if (modified_request_path.find(route_path) == 0 && route_path.length() > best_route.length())
@@ -268,7 +268,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 			*/
 		bool is_file = is_path_file(file_path + request.get_path());
 		bool is_directory = is_path_dir(file_path + request.get_path());
-		if (is_directory && request.get_path().back() != '/') {
+		if (is_directory && *(request.get_path().end() - 1) != '/') {
 			route = find_route(request.get_path().append("/"));
 			file_path = route->root.unwrap();
 			/*
