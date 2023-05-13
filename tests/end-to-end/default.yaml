@@ -7,3 +7,21 @@ servers:
             methods: GET
             root: PWD/www/
             index: index.html
+        - /google/:
+            methods: GET
+            redirection: www.google.com
+        - /redirect_to_google/:
+            methods: GET
+            redirection: /google/
+        - /redirect_to_index/:
+            methods: GET
+            redirection: /
+        - /recursive_redirect/:
+            methods: GET
+            redirection: /recursive_redirect/
+        - /mutual_redirect/:
+            methods: GET
+            redirection: /mutual_redirect_2/
+        - /mutual_redirect_2/:
+            methods: GET
+            redirection: /mutual_redirect/
