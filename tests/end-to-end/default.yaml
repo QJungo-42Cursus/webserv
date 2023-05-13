@@ -1,0 +1,9 @@
+servers:
+  - server:
+      port: 8080
+      client_max_body_size: 1m
+      routes:
+        - /:
+            methods: GET
+            root: PWD/www/
+            index: index.html
