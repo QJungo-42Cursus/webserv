@@ -84,16 +84,20 @@ def main():
         color_print("server started", BLUE)
 
     # Test the server
-    assert_get("http://localhost:8080/", 200, "<html>index</html>")
-    assert_get("http://localhost:8080/index.html", 200, "<html>index</html>")
-    assert_get("http://localhost:8080/index", 200, "<html>index</html>")
-    assert_get("http://localhost:8080/doesnotexist", 404, ERROR_404)
+    assert_get(HOST, 200, "<html>index</html>")
+    assert_get(HOST + "/index.html", 200, "<html>index</html>")
+    assert_get(HOST + "/index", 200, "<html>index</html>")
+    assert_get(HOST + "/doesnotexist", 404, ERROR_404)
     assert_get(HOST + "/photo/photo1", 200, "photo1")
     assert_redirect(HOST + "/google", 302, "")
     assert_redirect(HOST + "/redirect", 302, "", 2)
     assert_redirect(HOST + "/recursive_redirect", 302, "", 3)
     assert_redirect(HOST + "/mutual_redirect", 302, "", 2)
+    assert_get(HOST, 200, "<html>index</html>")
+
+    print("Should stop working... (timeout with the cgi)")
     assert_get(HOST + "/cgi-bin/hello", 200, "Hello World!")
+
     fork.kill()
 
 
