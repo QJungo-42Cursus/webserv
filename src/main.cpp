@@ -87,7 +87,8 @@ int main(int argc, char **argv)
 		FD_SET(listenSockFds[iServ], &fdSets.main); // adds the listening sock to the set
 		if (listenSockFds[iServ] > fdSets.fdMax)
 			fdSets.fdMax = listenSockFds[iServ];
-		std::cout << "Server " << (configs[iServ]->server_name).unwrap() << ": ready, listening on port "
+		std::string serverName = configs[iServ]->server_name.isSome() ? configs[iServ]->server_name.unwrap() : "not named";
+		std::cout << "Server " << serverName << ": ready, listening on port "
 			<< (configs[iServ]->port) << std::endl;
 	}
 
@@ -145,7 +146,12 @@ static std::string	getServName(Config* config)
 {
 	std::stringstream	ss;
 
-	ss << config->server_name.unwrap() << " (" 
+	if (config->server_name.isSome())
+		ss << config->server_name.unwrap();
+	else
+		ss << "unnamed";
+	ss
+	<< " ("
 		<< config->port << ")";
 	return ss.str();
 }

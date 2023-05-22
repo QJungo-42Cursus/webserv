@@ -2,11 +2,29 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include <sys/stat.h>
 #include <dirent.h>
 
 RequestHandler::RequestHandler(const Config *config) : config_(config)
 {
+}
+
+HttpResponse RequestHandler::handle_redirection(const Route* route) {
+    HttpResponse 	response;
+    std::string		response_url;
+	std::string		redirection;
+
+	redirection = route->redirection.unwrap();
+	if (redirection.at(0) == '/')
+		response_url = "http://localhost:8080" + route->redirection.unwrap();
+	else
+		response_url = "http://" + route->redirection.unwrap();
+    response.set_version("HTTP/1.1");
+    response.set_status(302, "Found");
+    response.add_header("Location", response_url);
+	std::cout << "Redirection URL: " << response_url << std::endl;
+    return response;
 }
 
 Option<HttpResponse> RequestHandler::parse(const HttpRequest& request) {
@@ -56,24 +74,6 @@ Option<HttpResponse> RequestHandler::parse(const HttpRequest& request) {
         // The request line and headers are well formed
         return Option<HttpResponse>::None();
     }
-/*
-Route *RequestHandler::find_route(const std::string &requested_path) const
-{
-    std::map<std::string, Route *>::const_iterator it;
-    Route* closest_route = NULL;
-    size_t closest_match_length = 0;
-
-    for (it = config_->routes.begin(); it != config_->routes.end(); ++it)
-    {
-        std::size_t route_len = it->first.length();
-        if (requested_path.find(it->first) == 0 && route_len > closest_match_length)
-        {
-            closest_route = it->second;
-            closest_match_length = route_len;
-        }
-    }
-    return closest_route;
-}*/
 
 Route *RequestHandler::find_route(const std::string &requested_path) const
 {
@@ -91,7 +91,7 @@ Route *RequestHandler::find_route(const std::string &requested_path) const
         std::string route_path = it->first;
 
         // If route_path doesn't end with a '/', append one
-        if (!route_path.empty() && *(requested_path.end() - 1) != '/')
+        if (!route_path.empty() && *(route_path.end() - 1) != '/')
             route_path += '/';
 
         if (modified_request_path.find(route_path) == 0 && route_path.length() > best_route.length())
@@ -192,29 +192,33 @@ bool is_path_file(const std::string& path) {
 }
 
 /// This will return a string containing the HTML code for a directory listing
-std::string dir_listing(std::string const &path, std::string const &uri)
+static std::string dir_listing(std::string const &path, std::string const &uri)
 {
-	std::vector<std::string> files;
-	files.push_back("./");
-	files.push_back("../");
+	std::cout << std::endl << "===================" << std::endl << std::endl;
+	std::cout << "dir_listing: " << path << std::endl << "uri: " << uri << std::endl;
 
 	DIR *dir;
 	struct dirent *ent;
 	if ((dir = opendir(path.c_str())) == NULL)
 		throw std::runtime_error("Could not open directory");
 
+	std::vector<std::string> files;
 	while ((ent = readdir(dir)) != NULL)
-	{
-		if (ent->d_name[0] != '.' && ent->d_name != "..")
-			files.push_back(ent->d_name);
-	}
+		files.push_back(ent->d_name);
+	std::sort(files.begin(), files.end());
+
 	closedir(dir);
 
-	std::string html =
-			"<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + uri + "</h1><hr>\n";
+	std::string html = "<html><head><title>Index of ";
+	html += path + "</title></head><body><h1>Index of " + uri + "</h1><hr>\n";
 	for (std::vector<std::string>::iterator it = files.begin(); it != files.end(); ++it)
 	{
-		html += "<a href=\"" + *it + "\">" + *it + "</a><br>\n";
+		std::string href;
+		if (uri.rfind('/') == uri.length() - 1)
+			href = uri + *it;
+		else
+			href = uri + "/" + *it;
+		html += "<a href=\"" + href + "\">" + *it + "/</a><br>\n";
 	}
 	html += "<hr></body></html>";
 	return html;
@@ -247,7 +251,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 			request.get_path()
 	);
 
-	Route *route = find_route(path_and_file.first);
+	Route *route = find_route(request.get_path());
 
 	if (route == NULL) {
 		return handle_error(404, "Not Found");
@@ -257,25 +261,41 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 		return handle_error(405, "Method Not Allowed");
 	}
 
-	std::string file_path;
+	std::string requested_path;
+  	std::string route_path;
+    std::string route_root;
+
+	if (route->redirection.isSome()) {
+		return handle_redirection(route);
+	}
 
 	if (route->root.isSome())
 	{
-		file_path = route->root.unwrap();
-		/*
-		if (file_path.back() == '/')
-			file_path.erase(file_path.size() - 1);
-			*/
-		bool is_file = is_path_file(file_path + request.get_path());
-		bool is_directory = is_path_dir(file_path + request.get_path());
-		if (is_directory && *(request.get_path().end() - 1) != '/') {
-			route = find_route(request.get_path().append("/"));
-			file_path = route->root.unwrap();
-			/*
-			if (file_path.back() == '/')
-				file_path.erase(file_path.size() - 1);
-				*/
-		}
+		std::cout << "Route found: " << route->name << std::endl;
+
+		requested_path = request.get_path();
+		route_path = route->name;
+		route_root = route->root.unwrap();
+
+		if (route_root[route_root.size() - 1] != '/')
+			route_root += '/';
+
+		if (requested_path[requested_path.size() - 1] != '/')
+			requested_path += '/';
+
+		size_t pos = requested_path.find(route_path);
+
+    	if (pos != std::string::npos) {
+        	requested_path.replace(pos, route_path.length(), route_root);
+    	}
+
+		if (requested_path[requested_path.size() - 1] == '/')
+			requested_path.erase(requested_path.size() - 1);
+
+		std::cout << "Requested_path : " << requested_path << std::endl;
+		bool is_file = is_path_file(requested_path);
+		bool is_directory = is_path_dir(requested_path);
+
 		std::cout << "Dir: " << is_directory << std::endl;
 		std::cout << "file: " << is_file << std::endl;
 		if (!is_file && !is_directory)
@@ -283,45 +303,36 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 		if (!is_file && is_directory)
 		{
 			if (route->repertory_listing) {
-				std::cout << "Listing Route: " << file_path << std::endl;
-				std::cout << "Listing path: " << request.get_path() << std::endl;
-				file_path += request.get_path();
-				response.set_body(dir_listing(file_path, request.get_path()));
+				response.set_body(dir_listing(requested_path, request.get_path()));
 				response.set_status(200, "OK");
 				response.add_header("Content-Type", "text/html");
 				return response;
 			}
 			else if (route->index.isSome()) {
-				file_path += route->index.unwrap();
-				std::cout << "Index path: " << std::endl;
+				requested_path = route->root.unwrap() + route->index.unwrap();
+				std::cout << "Index path: " << requested_path << std::endl;
 			}
 			else {
 				return handle_error(403, "Forbidden");
 			}
 		}
-		else
-		{
-			file_path += request.get_path();
-		}
 	}
-	else
-	{
-		// TODO: mettre PWD + www + request.get_path() par defaut ?
-		file_path = request.get_path();
+	else if (route->redirection.isSome()) {
+		//process http redirs
+		return handle_error(420, "Redir not implemented yet");
 	}
 
-	std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
+	std::ifstream file(requested_path.c_str(), std::ios::in | std::ios::binary);
 
-	if (!file)
-	{
+	if (!file) {
 		return handle_error(404, "Not Found");
 	}
-	else
-	{
+
+	else {
 		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 		response.set_body(content);
 		response.set_status(200, "OK");
-		response.add_header("Content-Type", get_content_type(file_path));
+		response.add_header("Content-Type", get_content_type(requested_path));
 	}
 	return response;
 }

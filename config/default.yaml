@@ -8,6 +8,7 @@ servers: # liste de serveurs
       routes: # liste des routes du serveur (optionnel ?)
         - /:
             methods: GET # methodes autorisees par la route (optionnel, default: GET)
+            # root agis comme un alias, il est optionnel mais si il est present il doit etre suivi d'un slash
             root: PWD/www/ # racine de la route (optionnel, default: PWD/www/ + url)
             repertory_listing: false # autorise le listing des repertoires (optionnel, default: false)
             index: index.html # page index (optionnel, default: index.html)
@@ -25,7 +26,7 @@ servers: # liste de serveurs
             upload: PWD/www/files/ # racine du telechargement, active l'upload de fichier (optionnel)
         - /admin/:
             methods: GET
-            root: PWD/www/admin/
+            root: PWD/www/admin
             repertory_listing: true
   - server:
       server_name: domain2.com

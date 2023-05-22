@@ -198,17 +198,10 @@ static Option<std::string> get_list_content(std::string &str, std::string key) {
     return Option<std::string>::Some(lines);
 }
 
-static std::string get_pwd() {
-    char *_pwd = getcwd(NULL, 0);
-    if (_pwd == NULL)
-        throw std::runtime_error("getcwd failed");
-    std::string pwd = _pwd;
-    free(_pwd); // TODO : check if it's ok
-    return pwd;
-}
+
 
 static void replacePWD(std::string &str) {
-    std::string pwd = get_pwd();
+    std::string pwd = get_cwd();
     std::string::size_type pos = 0;
     while ((pos = str.find("PWD", pos)) != std::string::npos) {
         str.replace(pos, 3, pwd);
@@ -250,23 +243,24 @@ static std::map<std::string, Route *> parse_routes(std::string &str) {
         return map;
     std::string lines = m_lines.unwrap();
     std::istringstream iss(lines);
-    bool new_route;
+    bool is_in_new_route;
     bool is_first = true;
     std::string route_path;
     std::string route_infos;
 
     for (std::string line; std::getline(iss, line);) {
-        new_route = line.substr(0, 2) == "- ";
-        if (is_first && !new_route)
+        is_in_new_route = line.substr(0, 2) == "- ";
+        if (is_first && !is_in_new_route)
             throw std::runtime_error("Invalid config file, a route must start with '- '");
-        if (!is_first && new_route) {
+        if (!is_first && is_in_new_route) {
+            // Va parser les infos de la route (de la derniere iteration)
             if (!map.count(route_path)) {
-                Route *route = Route::parse(route_infos);
-                route_infos = "";
+                Route *route = Route::parse(route_infos, route_path);
                 map[route_path] = route;
+                route_infos.clear();
             }
         }
-        if (new_route) {
+        if (is_in_new_route) {
             is_first = false;
             std::string route_line = line.substr(2);
             std::size_t pos = route_line.find(':');
@@ -279,10 +273,9 @@ static std::map<std::string, Route *> parse_routes(std::string &str) {
         } else {
             route_infos += line + "\n";
         }
-
     }
     if (!map.count(route_path)) {
-        Route *route = Route::parse(route_infos);
+        Route *route = Route::parse(route_infos, route_path);
         map[route_path] = route;
     }
 

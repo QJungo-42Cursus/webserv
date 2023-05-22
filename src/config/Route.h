@@ -9,7 +9,7 @@
 class Route
 {
 public:
-	static Route *parse(std::string &route_config);
+	static Route *parse(std::string &route_config, std::string const &route_name);
 
 	void log() const;
 
@@ -20,7 +20,6 @@ public:
 		static const short METHODS;
 		static const bool REPERTORY_LISTING;
 		static const Option<std::string> INDEX;
-		static const Option<std::string> ROOT;
 	};
 	Option<short> methods;
 	Option<std::string> redirection;
@@ -29,6 +28,7 @@ public:
 	Option<std::string> index;
 	Option<CgiConfig> cgi;
 	Option<std::string> upload_directory;
+    std::string name;
 };
 
 

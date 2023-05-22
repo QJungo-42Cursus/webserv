@@ -7,17 +7,18 @@
 
 class RequestHandler {
 public:
-    virtual ~RequestHandler() {}
+    virtual                 ~RequestHandler() {}
+    virtual                 HttpResponse handle_request(const HttpRequest& request) = 0;
     RequestHandler(const Config *config);
-    virtual HttpResponse handle_request(const HttpRequest& request) = 0;
 protected:
-    const Config *config_;
+    const Config*           config_;
 
-    Route* find_route(const std::string& requested_path) const;
-    bool is_method_allowed(const Route* route, const HttpRequest& request);
-    std::string create_error_html(int error_code, const std::string& error_phrase) const;
-    HttpResponse handle_error(int error_code, const std::string& error_phrase);
-    Option<HttpResponse> parse(const HttpRequest& request);
+    Route*                  find_route(const std::string& requested_path) const;
+    bool                    is_method_allowed(const Route* route, const HttpRequest& request);
+    std::string             create_error_html(int error_code, const std::string& error_phrase) const;
+    HttpResponse            handle_error(int error_code, const std::string& error_phrase);
+    Option<HttpResponse>    parse(const HttpRequest& request);
+    HttpResponse            handle_redirection(const Route* route);
 };
 
 class GetRequestHandler : public RequestHandler {
