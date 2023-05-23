@@ -38,8 +38,54 @@ def assert_get(url, expected_status_code, expected_response):
     except Exception as e:
         color_print("ERROR: python exception: %s" % e, RED)
 
-    color_print("SUCCESS: GET %s" % url, "\033[92m")
+    color_print("SUCCESS: GET %s" % url, GREEN)
 
+def assert_post(url, expected_status_code, expected_response):
+    try:
+        response = requests.post(url)
+        if response.status_code != expected_status_code:
+            error_print("expected status code '%d', got '%d'" % (expected_status_code,
+                                                                 response.status_code), url)
+            return
+        if response.text != expected_response:
+            error_print("expected response '%s', got '%s'" % (expected_response, response.text))
+            return
+    except Exception as e:
+        color_print("ERROR: python exception: %s" % e, RED)
+
+    color_print("SUCCESS: POST %s" % url, GREEN)
+
+def assert_put(url, expected_status_code, expected_response):   
+    try:
+        response = requests.put(url)
+        if response.status_code != expected_status_code:
+            error_print("expected status code '%d', got '%d'" % (expected_status_code,
+                                                                 response.status_code), url)
+            return
+        if response.text != expected_response:
+            error_print("expected response '%s', got '%s'" % (expected_response, response.text))
+            return
+    except Exception as e:
+        color_print("ERROR: python exception: %s" % e, RED)
+
+    color_print("SUCCESS: PUT %s" % url, GREEN)
+
+
+
+def assert_delete(url, expected_status_code, expected_response):
+    try:
+        response = requests.delete(url)
+        if response.status_code != expected_status_code:
+            error_print("expected status code '%d', got '%d'" % (expected_status_code,
+                                                                 response.status_code), url)
+            return
+        if response.text != expected_response:
+            error_print("expected response '%s', got '%s'" % (expected_response, response.text))
+            return
+    except Exception as e:
+        color_print("ERROR: python exception: %s" % e, RED)
+
+    color_print("SUCCESS: DELETE %s" % url, GREEN)
 
 def assert_redirect(url, expected_status_code, expected_response, expected_history_length=1):
     try:
@@ -57,7 +103,7 @@ def assert_redirect(url, expected_status_code, expected_response, expected_histo
     except Exception as e:
         error_print("python exception: %s" % e, url)
     else:
-        color_print("SUCCESS: GET redirect %s" % url, "\033[92m")
+        color_print("SUCCESS: GET redirect %s" % url, GREEN)
 
 
 def main():
