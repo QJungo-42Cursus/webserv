@@ -6,19 +6,17 @@
 /*   By: tplanes <tplanes@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 18:22:48 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/10 14:42:50 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/25 18:40:20 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 
-// Warning, shouldnt use accessor for _addr here (possible cast issue)
-//Client::Client(void) : _fd(-1), _addrSize(sizeof(this->_addr)), _nBytesRequest(0),
 Client::Client(void) : _fd(-1), _addrSize(sizeof(this->_addr)), _nBytesRec(0),
-	_flagResponse(false), _flagCloseAfterWrite(false) 
+	_flagResponse(false), _flagCloseAfterWrite(false), _flagHeaderComplete(false),
+	//_flagOversize(false)
 {
 	std::cout << "Client default constructor called" << std::endl;
-	//this->clearRequestBuff();
 	return ;
 }
 
@@ -40,13 +38,36 @@ int	Client::getListenFd(void) const
 	return (this->_listenFd);
 }
 
-//char*	Client::getRequestBuff(void)
 std::string&	Client::getRequest(void)
 {
 	return (this->_request);
 }
 
-//int	Client::getNBytesRequest(void) const
+std::string&	Client::getHeader(void)
+{
+	return (this->_header);
+}
+
+std::string&	Client::getBody(void)
+{
+	return (this->_body);
+}
+
+int				Client::getMaxBodySize(void)
+{
+	return (this->_maxBodySize);
+}
+
+bool			Client::getFlagHeaderComplete(void)
+{
+	return (this->_flagHeaderComplete);
+}
+
+/*bool			Client::getFlagOversize(void)
+{
+	return (this->_flagOversize);
+}*/
+
 int	Client::getNBytesRec(void) const
 {
 	return (this->_nBytesRec);
@@ -77,11 +98,29 @@ bool	Client::getFlagCloseAfterWrite(void) const
 	return (this->_flagCloseAfterWrite);
 }
 
-//void	Client::clearRequestBuff(void)
 void	Client::clearRequest(void)
 {
-	//memset(this->getRequestBuff(), 0, BUFFSIZE);
 	(this->getRequest()).clear();
+	(this->getHeader()).clear();
+	(this->getBody()).clear();
+	return ;
+}
+
+void	Client::setFlagHeaderComplete(bool flag)
+{
+	this->_flagHeaderComplete = flag;
+	return ;
+}
+
+/*void	Client::setFlagOversize(bool flag)
+{
+	this->_flagOversize = flag;
+	return ;
+}*/
+
+void	Client::setMaxBodySize(int size)
+{
+	this->_maxBodySize = size;
 	return ;
 }
 
@@ -97,7 +136,6 @@ void	Client::setListenFd(int fd)
 	return ;
 }
 
-//void	Client::setNBytesRequest(int nBytesRequest)
 void	Client::setNBytesRec(int nBytesRec)
 {
 	this->_nBytesRec = nBytesRec;

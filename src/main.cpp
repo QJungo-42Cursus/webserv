@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/25 13:07:32 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/25 19:08:32 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,11 @@ static void		handleNewConnection(int listenSockFd, t_fdSets* fdSets,
 static void		handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet,
 	Client* clientArray[]);
 
-static void		readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[]);
+static void		readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets,
+	Client* clientArray[]);
 
-static void		writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[]);
+static void		writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets,
+	Client* clientArray[]);
 
 static void		processRequest(Client* client, Config *config);
 
@@ -122,7 +124,8 @@ int main(int argc, char **argv)
 	return (0);
 }
 
-static void	handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet, Client* clientArray[])
+static void	handleSockError(int fd, Config* configFromFd[], fd_set* mainFdSet,
+	Client* clientArray[])
 {
 	if (configFromFd[fd]) // if fd is a listening socket
 	{
@@ -164,21 +167,14 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		return ;
 	}
 	
-	Config* config = configFromFd[clientArray[fd]->getListenFd()];
-	//std::cout << "=== Server " << getServName(configFromFd[clientArray[fd]->getListenFd()])
+	Client* client = clientArray[fd];
+	Config* config = configFromFd[client->getListenFd()];
 	std::cout << "=== Server " << getServName(config)
 		<< ": receiving data on sock #" << fd << ":" << std::endl;
 	
-	//int		bufSize = MAX_HEADER_SIZE + MAX_BODY_SIZE + 1; // shld replace max body size by config value (should also protect against stack overflow?)
-	
-	int		maxBodySize = atoi((config->client_max_body_size.unwrap()).c_str());
-	int		bufSize = MAX_HEADER_SIZE + maxBodySize + 1;
+	int		bufSize = MAX_HEADER_SIZE + client->getMaxBodySize() + 1;
 	char*	buf = new char[bufSize];
-
-	//char	buf[MAX_HEADER_SIZE + MAX_BODY_SIZE + 1] = {}; // better to use a static one and clear it each time ?
-	
-	//int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
-	int nBytesRead = recv(fd, buf, bufSize, 0);
+	int		nBytesRead = recv(fd, buf, bufSize, 0);
 	if (nBytesRead <= 0)
 	{
 		if (nBytesRead == 0) // should add more serv and client info
@@ -187,18 +183,44 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 			std::cout << "Error on sock #" << fd << ", closing connection." << std::endl;
 		close(fd);
 		FD_CLR(fd, &fdSets->main);
-		delete clientArray[fd];
+		delete client;
 		clientArray[fd] = NULL;
 		delete [] buf;
 		return ;
 	}
-	(clientArray[fd]->getRequest()).append(buf, nBytesRead);
-	clientArray[fd]->setNBytesRec(nBytesRead);
+	(client->getRequest()).append(buf, nBytesRead);
+	client->setNBytesRec(nBytesRead);
 	std::cout << buf << "===" << std::endl; // tmp
-	processRequest(clientArray[fd], config);
+	try	
+	{
+		processRequest(client, config);
+	}
+	catch (std::exception const& e)
+	{
+		//print msg and prep error response
+		prepareErrorResponse(client);
+	}
 	delete [] buf;
 	return ;
 }
+
+// to be upgraded with file/handler
+static void	prepareErrorResponse(Client *client)
+{
+	HttpResponse response;
+	
+	client->setFlagResponse(true);
+	response.set_version("HTTP/1.1"); // should send error page instead
+	response.set_status(400, "Bad Request: too big.");
+	client->setResponse(response.to_string());
+	client->setFlagCloseAfterWrite(true); 
+	
+	std::cout << "==== Prepared response ====" << std::endl
+		<< response.to_string() << "\n==================" << std::endl; //tmp for debug
+
+	return ;
+}
+
 
 static void	writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client* clientArray[])
 {
@@ -250,6 +272,7 @@ static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clie
 	{
 		tmpClient->setFd(connectSockFd);
 		tmpClient->setListenFd(listenSockFd);
+		tmpClient->setMaxBodySize(config->client_max_body_size.unwrap());
 		clientArray[connectSockFd] = tmpClient;
 		// need to make sock non blocking here with fcntl?
 		fcntl(connectSockFd, F_SETFL, O_NONBLOCK);
@@ -282,20 +305,21 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 
 static void	processRequest(Client* client, Config *config)
 {
-	int	maxBodySize = atoi((config->client_max_body_size.unwrap()).c_str());
-	int	max_size = MAX_HEADER_SIZE + maxBodySize; 
+	int	max_size = MAX_HEADER_SIZE + client->getMaxBodySize(); 
 	
 	// Create a new response
 	HttpResponse response;
 	client->setFlagResponse(true); //set to true by default and switch off if necessary
 	
-	if (client->getNBytesRec() >= max_size || (client->getRequest()).size() >= max_size) // only last check sufficient?
+	//|| (client->getRequest()).size() > max_size) // only last check sufficient?
+	if (client->getNBytesRec() > max_size)
 	{
-		response.set_version("HTTP/1.1"); // should send error page instead?
-		response.set_status(400, "Bad Request: too big.");
-		client->setFlagCloseAfterWrite(true); // flag to close connection after writing response
+		throw std::runtime_error("N bytes read over max size");
+		//response.set_version("HTTP/1.1"); // should send error page instead
+		//response.set_status(400, "Bad Request: too big.");
+		//client->setFlagCloseAfterWrite(true); // flag to close connect after writing response
 	}
-	else if (!isRequestComplete(client->getRequest()))
+	else if (!isRequestComplete(client))
 	{
 		client->setFlagResponse(false);
 		std::cout << "=== Request incomplete: server keeps reading...===" << std::endl;
@@ -331,20 +355,20 @@ static void	processRequest(Client* client, Config *config)
 	std::cout << "==== Prepared response ====" << std::endl
 		<< response.to_string() << "\n==================" << std::endl; //tmp for debug
 	client->setResponse(response.to_string());
-	client->clearRequest();
+	client->clearRequest(); //also clears header and body
+	client->setFlagHeaderComplete(false);
+	//client->setFlagOversize(false);
 	return ;
 }
 
 // quite some unnecesarry repeated operations in current design...
-// could used flags to avoid
-static bool	isRequestComplete(std::string const& requestStr)
+// could use flags to avoid
+static bool	isRequestComplete(client *client)
 {
-	std::string header, body;
-
-	if (!isHeaderComplete(requestStr, header, body))
+	if (!isHeaderComplete(client))
 		return (false);
 
-	HttpRequest	request(header);
+	HttpRequest	request(client.getHeader());
 	if (request.get_method() != Http::Methods::POST) 
 		return (true); //we only accept body with POST method
 	//Note, if two requests are sent in same chunk, the second one would be ignored 
@@ -353,19 +377,18 @@ static bool	isRequestComplete(std::string const& requestStr)
 	
 	if (headerMap.count("Content-Length"))	//note: in therory should be case insensitive 
 	{
-		unsigned int bodySize = atoi(headerMap["Content-Length"].c_str()); // return err here 
-																	     // if >maxbody size?
-		// leaves error treatment to Quentin's parser atm
-		if (bodySize > MAX_BODY_SIZE)
-			bodySize = MAX_BODY_SIZE;
-		if (body.length() < bodySize)
+		unsigned int bodySize = atoi(headerMap["Content-Length"].c_str());
+
+		if (bodySize > client->getMaxBodySize())
+			throw std::runtime_error("bodysize specified in header over max body size");
+		if (client->getBody().length() < bodySize)
 			return (false);
 		return (true);
 	}	
 	else if (headerMap.count("Transfer-Encoding")
 		&& headerMap["Transfer-Encoding"].compare("chunked"))	
 	{
-		if (isChunkedBodyComplete(body))
+		if (isChunkedBodyComplete(client->getBody()))
 			return (true);
 		return (false);
 	}
@@ -373,23 +396,27 @@ static bool	isRequestComplete(std::string const& requestStr)
 	return (true);	
 }
 
-static bool	isHeaderComplete(std::string const& requestStr, std::string& header,
-	std::string& body)
+static bool	isHeaderComplete(Client *client)
 {
+	if (client->getFlagHeaderComplete())
+		return (true);
+
+	std::string requestStr = client->getRequest();
+	std::string	header;
 	std::string const	ending("\r\n\r\n");
 	std::string::size_type pos;
-	
-	//if (requestStr.length() < ending.length())
-	//	return (false);
-	//if (request.compare(request.length() - ending.length(), ending.length(), ending) == 0)
 	
 	pos = requestStr.find(ending, 0);
 	if (pos != std::string::npos)
 	{
 		header = requestStr.substr(0, pos + ending.length());
-		std::cout << "===PARSED FULL HEADER BELOW===\n" << header << "===" << std::endl;
+		if (header.size() > MAX_HEADER_SIZE)
+			throw std::runtime_error("request header size too big");
+		client->getHeader() = header;
+		std::cout << "===PARSED FULL HEADER BELOW===\n" << client->getHeader() 
+			<< "===" << std::endl;
 		if (requestStr.length() > header.length())
-			body = requestStr.substr(pos + ending.length());
+			client->getBody() = requestStr.substr(pos + ending.length());
 		return (true);
 	}
 	return (false);
@@ -397,7 +424,7 @@ static bool	isHeaderComplete(std::string const& requestStr, std::string& header,
 
 // Note: this not a perfect way to detect ending
 // there could be some cases where ending sequence exists within chunk 
-static bool	isChunkedBodyComplete(std::string& body)
+static bool	isChunkedBodyComplete(std::string const& body)
 {
 	std::string const	ending("0\r\n\r\n");
 	std::string::size_type pos;
