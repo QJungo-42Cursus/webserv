@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/10 16:08:20 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/25 12:58:32 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,12 +149,19 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		handleNewConnection(fd, fdSets, clientArray, configFromFd[fd]);
 		return ;
 	}
-	std::cout << "=== Server " << getServName(configFromFd[clientArray[fd]->getListenFd()])
+	
+	Config* config = configFromFd[clientArray[fd]->getListenFd()];
+	//std::cout << "=== Server " << getServName(configFromFd[clientArray[fd]->getListenFd()])
+	std::cout << "=== Server " << getServName(config)
 		<< ": receiving data on sock #" << fd << ":" << std::endl;
 	
-	int		bufSize = MAX_HEADER_SIZE + MAX_BODY_SIZE + 1; // shld replace max body size by config value (should also protect against stack overflow?)
-	//char	buf[bufSize] = {}; // better to use a static one and clear it each time ?
-	char	buf[MAX_HEADER_SIZE + MAX_BODY_SIZE + 1] = {}; // better to use a static one and clear it each time ?
+	//int		bufSize = MAX_HEADER_SIZE + MAX_BODY_SIZE + 1; // shld replace max body size by config value (should also protect against stack overflow?)
+	
+	int		maxBodySize = atoi((config->client_max_body_size.unwrap()).c_str());
+	int		bufSize = MAX_HEADER_SIZE + maxBodySize + 1;
+	char*	buf = new char[bufSize];
+
+	//char	buf[MAX_HEADER_SIZE + MAX_BODY_SIZE + 1] = {}; // better to use a static one and clear it each time ?
 	
 	//int nBytesRead = recv(fd, clientArray[fd]->getRequestBuff(), BUFFSIZE, 0);
 	int nBytesRead = recv(fd, buf, bufSize, 0);
@@ -168,15 +175,14 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		FD_CLR(fd, &fdSets->main);
 		delete clientArray[fd];
 		clientArray[fd] = NULL;
+		delete [] buf;
 		return ;
 	}
 	(clientArray[fd]->getRequest()).append(buf, nBytesRead);
 	clientArray[fd]->setNBytesRec(nBytesRead);
-	
-	//clientArray[fd]->setNBytesRequest(nBytesRead);
 	std::cout << buf << "===" << std::endl; // tmp
-	//std::cout << clientArray[fd]->getRequestBuff() << "===" << std::endl; // tmp
-	processRequest(clientArray[fd], configFromFd[clientArray[fd]->getListenFd()]);
+	processRequest(clientArray[fd], config);
+	delete [] buf;
 	return ;
 }
 
@@ -262,7 +268,8 @@ static int	pollSockets(t_fdSets* fdSets, struct timeval* timeOut)
 
 static void	processRequest(Client* client, Config *config)
 {
-	int max_size = MAX_HEADER_SIZE + MAX_BODY_SIZE; 
+	int	maxBodySize = atoi((config->client_max_body_size.unwrap()).c_str());
+	int	max_size = MAX_HEADER_SIZE + maxBodySize; 
 	
 	// Create a new response
 	HttpResponse response;
