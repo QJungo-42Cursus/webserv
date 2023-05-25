@@ -10,12 +10,15 @@ SRCS =			src/main.cpp \
 				src/config/Route.cpp \
 				src/config/yaml_helper.cpp \
 				src/utils/split.cpp \
+				src/utils/get_cwd.cpp \
 				src/server/HttpRequest.cpp \
 				src/server/HttpResponse.cpp \
+				src/server/request_handler/DeleteRequestHandler.cpp \
 				src/server/Client.cpp \
 				src/server/listenerSocket.cpp \
 				src/server/RequestHandler.cpp \
 				src/cgi_executor/CgiExecutor.cpp \
+
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -44,7 +47,6 @@ py: all
 	./$(NAME) & python3 tests/client.py
 
 T_NAME =	webserv_tests
-T_CFLAGS =	-Wall -Wextra -Werror -std=c++14
 T_OBJS =		$(T_SRCS:.cpp=.o)
 SAN =	-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all \
 		-fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow \
@@ -65,7 +67,7 @@ endif
 # $(CC) $(T_CFLAGS) $(SAN) $(SRCS) $(T_SRCS) $(GTEST) -o $(NAME)
 
 $(T_NAME): $(T_OBJS)
-	$(CC) $(T_CFLAGS) $(T_OBJS) -D _TEST_  $(SRCS) $(GTEST) -o $(T_NAME)
+	$(CC) $(T_OBJS) -D _TEST_  $(SRCS) $(GTEST) -o $(T_NAME)
 
 t_all: $(T_NAME)
 

@@ -9,12 +9,11 @@ servers:
         - /:
             methods: GET
             root: PWD/www/ # pour l'instant ca crash si on le met pas
-            index: youpi.bla # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
-        - /post_body:
+            index: index.html # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
+            #index: youpi.bla # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
+        - /post_body/:
             methods: POST
-            client_max_body_size: 1m # l'eval demande "100"
         - /directory/:
             methods: GET
-            root: PWD/YoupiBanane/
-            repertory_listing: true
+            root: PWD/www/YoupiBanane/
             index: youpi.bad_extension

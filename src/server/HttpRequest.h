@@ -13,6 +13,8 @@ public:
     std::string get_version() const;
     std::map<std::string, std::string> get_headers() const;
     std::string get_body() const;
+    const std::string get_raw() const;
+    
 	void log() const;
 
 private:
@@ -21,7 +23,7 @@ private:
     std::string version_;
     std::map<std::string, std::string> headers_;
     std::string body_;
-
+    const std::string& raw_;
     void parse_request(const std::string& raw_request);
     void parse_request_line(const std::string& line);
     void parse_header(const std::string& line);
