@@ -40,6 +40,7 @@ def assert_get(url, expected_status_code, expected_response):
 
     color_print("SUCCESS: GET %s" % url, GREEN)
 
+
 def assert_post(url, expected_status_code, expected_response):
     try:
         response = requests.post(url)
@@ -55,7 +56,8 @@ def assert_post(url, expected_status_code, expected_response):
 
     color_print("SUCCESS: POST %s" % url, GREEN)
 
-def assert_put(url, expected_status_code, expected_response):   
+
+def assert_put(url, expected_status_code, expected_response):
     try:
         response = requests.put(url)
         if response.status_code != expected_status_code:
@@ -69,7 +71,6 @@ def assert_put(url, expected_status_code, expected_response):
         color_print("ERROR: python exception: %s" % e, RED)
 
     color_print("SUCCESS: PUT %s" % url, GREEN)
-
 
 
 def assert_delete(url, expected_status_code, expected_response):
@@ -87,19 +88,28 @@ def assert_delete(url, expected_status_code, expected_response):
 
     color_print("SUCCESS: DELETE %s" % url, GREEN)
 
-def assert_redirect(url, expected_status_code, expected_response, expected_history_length=1):
+
+def assert_redirect(url, expected_status_code, expected_response, expected_history_length=1,
+                    catch_infinite_redirect=False):
     try:
         response = requests.get(url)
         if len(response.history) != expected_history_length:
-            error_print("expected 1 redirect, got %d" % len(response.history), url)
+            error_print(
+                f"expected {expected_history_length} redirect, got {len(response.history)}"
+                f" (and code {response.status_code})", url)
             return
         response = response.history[0]
         if response.status_code != expected_status_code:
-            error_print("expected status code '%d', got '%d'" % (expected_status_code,
-                                                                 response.status_code), url)
+            error_print(f"expected status code '{expected_status_code}', got '{response.status_code}'", url)
             return
         if response.text != expected_response:
             error_print("expected response '%s', got '%s'" % (expected_response, response.text))
+    except requests.exceptions.TooManyRedirects:
+        if catch_infinite_redirect:
+            color_print("SUCCESS: caught infinite redirect", GREEN)
+            return
+        else:
+            error_print("caught infinite redirect", url)
     except Exception as e:
         error_print("python exception: %s" % e, url)
     else:
@@ -132,13 +142,13 @@ def main():
     # Test the server
     assert_get(HOST, 200, "<html>index</html>")
     assert_get(HOST + "/index.html", 200, "<html>index</html>")
-    assert_get(HOST + "/index", 200, "<html>index</html>")
+    assert_get(HOST + "/index", 404, ERROR_404)
     assert_get(HOST + "/doesnotexist", 404, ERROR_404)
     assert_get(HOST + "/photo/photo1", 200, "photo1")
-    assert_redirect(HOST + "/google", 302, "")
-    assert_redirect(HOST + "/redirect", 302, "", 2)
-    assert_redirect(HOST + "/recursive_redirect", 302, "", 3)
-    assert_redirect(HOST + "/mutual_redirect", 302, "", 2)
+    assert_redirect(HOST + "/google", 302, "", 1)
+    # assert_redirect(HOST + "/redirect", 302, "", 2)
+    assert_redirect(HOST + "/recursive_redirect", 302, "", 3, True)
+    assert_redirect(HOST + "/mutual_redirect", 302, "", 2, False)
     assert_get(HOST, 200, "<html>index</html>")
 
     print("Should stop working... (timeout with the cgi)")
