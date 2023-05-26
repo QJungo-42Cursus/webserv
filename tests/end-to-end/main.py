@@ -106,7 +106,7 @@ def assert_redirect(url, expected_status_code, expected_response, expected_histo
             error_print("expected response '%s', got '%s'" % (expected_response, response.text))
     except requests.exceptions.TooManyRedirects:
         if catch_infinite_redirect:
-            color_print("SUCCESS: caught infinite redirect", GREEN)
+            color_print(f"SUCCESS: caught infinite redirect {url}", GREEN)
             return
         else:
             error_print("caught infinite redirect", url)
@@ -141,19 +141,21 @@ def main():
 
     # Test the server
     assert_get(HOST, 200, "<html>index</html>")
+    assert_get(HOST + '/', 200, "<html>index</html>")
+    assert_get(HOST + '   /', 200, "<html>index</html>")
+    assert_get(HOST + '/   ', 200, "<html>index</html>")
     assert_get(HOST + "/index.html", 200, "<html>index</html>")
     assert_get(HOST + "/index", 404, ERROR_404)
+    assert_get(HOST + '/redirect_to_index', 200, "<html>index</html>")
     assert_get(HOST + "/doesnotexist", 404, ERROR_404)
     assert_get(HOST + "/photo/photo1", 200, "photo1")
     assert_redirect(HOST + "/google", 302, "", 1)
-    # assert_redirect(HOST + "/redirect", 302, "", 2)
+    assert_redirect(HOST + '/redirect_to_google', 302, '', 2)
     assert_redirect(HOST + "/recursive_redirect", 302, "", 3, True)
-    assert_redirect(HOST + "/mutual_redirect", 302, "", 2, False)
-    assert_get(HOST, 200, "<html>index</html>")
-
-    print("Should stop working... (timeout with the cgi)")
-    assert_get(HOST + "/cgi-bin/hello", 200, "Hello World!")
-
+    assert_redirect(HOST + "/mutual_redirect", 302, "", 2, True)
+    print('cgi call: ')
+    assert_get(HOST + "/api/call.ppp", 200, "HI !")
+    assert_get(HOST + "/api/call.php", 200, "HI !")
     fork.kill()
 
 
