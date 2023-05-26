@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/26 10:00:15 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/26 15:11:36 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ static bool	isHeaderComplete(Client* client);
 
 static bool	isChunkedBodyComplete(std::string const& body);
 
-static void	prepareErrorResponse(Client *client);
+static void	prepareErrorResponse(Client *client, Config* config, std::string const& errStr);
 
 int main(int argc, char **argv)
 {
@@ -174,8 +174,9 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		<< ": receiving data on sock #" << fd << ":" << std::endl;
 	
 	int		bufSize = MAX_HEADER_SIZE + client->getMaxBodySize() + 1;
+	//int		bufSize = 6145; to test if chunked recv works
 	char*	buf = new char[bufSize];
-	memset(buf, 0, bufSize);
+	memset(buf, 0, bufSize); //only necessary for buffer visualization
 	int		nBytesRead = recv(fd, buf, bufSize, 0);
 	if (nBytesRead <= 0)
 	{
@@ -190,33 +191,34 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		delete [] buf;
 		return ;
 	}
-	//std::string bufStr; // just for display
-	//bufStr.append(buf, nBytesRead);
 	(client->getRequest()).append(buf, nBytesRead);
 	client->setNBytesRec(nBytesRead);
 	std::cout << buf << "===" << std::endl; // tmp
-	//std::cout << bufStr << "===" << std::endl; // tmp
 	try	
 	{
 		processRequest(client, config);
 	}
 	catch (std::exception const& e)
 	{
-		std::cout << e.what() << std::endl;
-		prepareErrorResponse(client);
+		std::string	errStr(e.what());
+		std::cout << errStr << std::endl;
+		//std::cout << e.what() << std::endl;
+		prepareErrorResponse(client, config, errStr);
 	}
 	delete [] buf;
 	return ;
 }
 
 // to be upgraded with file/handler
-static void	prepareErrorResponse(Client *client)
+static void	prepareErrorResponse(Client *client, Config* config, std::string const& errStr)
 {
 	HttpResponse response;
 	
+	GetRequestHandler	rh(config); 
+    response = rh.handle_error(404, errStr); // could use specific codes for oversize requests
 	client->setFlagResponse(true);
-	response.set_version("HTTP/1.1"); // should send error page instead
-	response.set_status(400, "Bad Request: too big.");
+	//response.set_version("HTTP/1.1"); // should send error page instead
+	//response.set_status(400, "Bad Request: too big.");
 	client->setResponse(response.to_string());
 	client->setFlagCloseAfterWrite(true); 
 	
@@ -312,46 +314,43 @@ static void	processRequest(Client* client, Config *config)
 {
 	int	max_size = MAX_HEADER_SIZE + client->getMaxBodySize(); 
 	
-	// Create a new response
-	HttpResponse response;
-	client->setFlagResponse(true); //set to true by default and switch off if necessary
-	
 	if (client->getNBytesRec() > max_size)
 		throw std::runtime_error("Error: number of bytes read over max allowed size (HEADER + BODY)");
 	else if (!isRequestComplete(client))
 	{
-		client->setFlagResponse(false);
+		client->setFlagResponse(false); //should already be set to false (to verify)
 		std::cout << "=== Request incomplete: server keeps reading...===" << std::endl;
 		return ;
 	}
-	else
-	{	
-		HttpRequest request((client->getHeader()).append(client->getBody()));
+	
+	// Create a new response
+	HttpResponse response;
+	client->setFlagResponse(true);
 		
-		if (request.get_method() == Http::Methods::GET) 
-		{
-			GetRequestHandler get_handler(config);
-			response = get_handler.handle_request(request);
-		}
-		else if (request.get_method() == Http::Methods::POST)
-		{
-			PostRequestHandler post_handler(config);
-			response = post_handler.handle_request(request);
-		}
-		else if (request.get_method() == Http::Methods::DELETE)
-		{
-			DeleteRequestHandler delete_handler(config);
-			std::string response_str = delete_handler.handle_request_str(request);
-		} 
-		else
-		{
-			//should try to return error file instead
-			response.set_version("HTTP/1.1");
-			response.set_status(405, "Method Not Allowed");
-			client->setFlagCloseAfterWrite(true);
-		}
-
+	HttpRequest request((client->getHeader()).append(client->getBody()));
+		
+	if (request.get_method() == Http::Methods::GET) 
+	{
+		GetRequestHandler get_handler(config);
+		response = get_handler.handle_request(request);
 	}
+	else if (request.get_method() == Http::Methods::POST)
+	{
+		PostRequestHandler post_handler(config);
+		response = post_handler.handle_request(request);
+	}
+	else if (request.get_method() == Http::Methods::DELETE)
+	{
+		DeleteRequestHandler delete_handler(config);
+		std::string response_str = delete_handler.handle_request_str(request);
+	} 
+	else
+	{
+		GetRequestHandler	rh(config); //nb could create a specific child error class
+    	response = rh.handle_error(405, "Method not allowed.");
+		client->setFlagCloseAfterWrite(true); 
+	}
+
 	std::cout << "==== Prepared response ====" << std::endl
 		<< response.to_string() << "\n==================" << std::endl; //tmp for debug
 	client->setResponse(response.to_string());
@@ -422,9 +421,10 @@ static bool	isHeaderComplete(Client *client)
 		client->getHeader() = header;
 		std::cout << "===PARSED FULL HEADER BELOW===\n" << client->getHeader() 
 			<< "===" << std::endl;
+		client->setFlagHeaderComplete(true);
 		if (requestStr.length() > header.length())
 			client->getBody() = requestStr.substr(pos + ending.length());
-		client->clearRequest(); //need to mod fct to clear only request
+		client->clearRequest();
 		return (true);
 	}
 	else if (requestStr.size() > MAX_HEADER_SIZE)
