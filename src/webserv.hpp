@@ -6,7 +6,7 @@
 /*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:23:23 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/25 12:26:40 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/26 15:25:42 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,16 +28,11 @@
 # include <fstream>
 
 #include <cstdlib> // needed for what? forbidden?
-
 #include <errno.h>
-//#include <string.h>
 
-
-//# define PORT "8080" //replaced by config->port
 # define BACKLOG 5 // number of connections allowed on incoming queue
-//# define BUFFSIZE 2048 // size of read buffer containing request
 # define MAX_HEADER_SIZE 2048 // max size of header in received request
-//# define MAX_BODY_SIZE 4096 // max size of body in received request (to be replaced by config value)
+//# define MAX_HEADER_SIZE 20 // to test header size error
 
 //# define FD_SETSIZE 1024 // how to overide the default higher value? (should test what happens if pass limit)
 

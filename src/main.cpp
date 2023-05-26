@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/26 15:11:36 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/26 15:46:19 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
  		{
 			if (FD_ISSET(fd, &fdSets.error))
 				handleSockError(fd, configFromFd, &fdSets.main, clientArray);
-			else if (FD_ISSET(fd, &fdSets.read))
+			else if (FD_ISSET(fd, &fdSets.read) && (configFromFd[fd] || !clientArray[fd]->getFlagResponse()))
 				readSocket(fd, configFromFd, &fdSets, clientArray);
 			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
 			{	
@@ -217,8 +217,6 @@ static void	prepareErrorResponse(Client *client, Config* config, std::string con
 	GetRequestHandler	rh(config); 
     response = rh.handle_error(404, errStr); // could use specific codes for oversize requests
 	client->setFlagResponse(true);
-	//response.set_version("HTTP/1.1"); // should send error page instead
-	//response.set_status(400, "Bad Request: too big.");
 	client->setResponse(response.to_string());
 	client->setFlagCloseAfterWrite(true); 
 	
@@ -280,6 +278,8 @@ static void	handleNewConnection(int listenSockFd, t_fdSets* fdSets, Client *clie
 		tmpClient->setFd(connectSockFd);
 		tmpClient->setListenFd(listenSockFd);
 		tmpClient->setMaxBodySize(config->client_max_body_size.unwrap());
+		//tmpClient->setMaxBodySize(1); // to test body size error
+		
 		clientArray[connectSockFd] = tmpClient;
 		// need to make sock non blocking here with fcntl?
 		fcntl(connectSockFd, F_SETFL, O_NONBLOCK);
