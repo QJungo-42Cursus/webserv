@@ -302,6 +302,8 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 			return handle_error(404, "Not Found");
 		if (!is_file && is_directory)
 		{
+			if (requested_path[requested_path.size() - 1] != '/')
+				requested_path += '/';
 			if (route->repertory_listing) {
 				response.set_body(dir_listing(requested_path, request.get_path()));
 				response.set_status(200, "OK");
@@ -309,7 +311,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 				return response;
 			}
 			else if (route->index.isSome()) {
-				requested_path = route->root.unwrap() + route->index.unwrap();
+				requested_path += route->index.unwrap();
 				std::cout << "Index path: " << requested_path << std::endl;
 			}
 			else {
