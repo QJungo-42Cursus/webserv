@@ -47,7 +47,15 @@ int main(int argc, char **argv)
     std::vector<Config *> configs;
     try
     {
-        configs = argc == 1 ? Config::parse_servers(DEFAULT_CONFIG_FILE_PATH) : Config::parse_servers(argv[1]);
+		if (argc == 1)
+		{
+			std::cout << "No config file specified, using default config file: " << DEFAULT_CONFIG_FILE_PATH << std::endl;
+			configs = Config::parse_servers(DEFAULT_CONFIG_FILE_PATH);
+		}
+		else
+		{
+        	configs = Config::parse_servers(argv[1]);
+		}
     }
     catch (std::exception &e)
     {
