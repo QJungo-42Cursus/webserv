@@ -6,15 +6,14 @@
 /*   By: tplanes <tplanes@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 18:22:48 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/25 18:40:20 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/26 09:30:24 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 
 Client::Client(void) : _fd(-1), _addrSize(sizeof(this->_addr)), _nBytesRec(0),
-	_flagResponse(false), _flagCloseAfterWrite(false), _flagHeaderComplete(false),
-	//_flagOversize(false)
+	_flagResponse(false), _flagCloseAfterWrite(false), _flagHeaderComplete(false)
 {
 	std::cout << "Client default constructor called" << std::endl;
 	return ;
@@ -58,7 +57,7 @@ int				Client::getMaxBodySize(void)
 	return (this->_maxBodySize);
 }
 
-bool			Client::getFlagHeaderComplete(void)
+bool			Client::getFlagHeaderComplete(void) const
 {
 	return (this->_flagHeaderComplete);
 }
@@ -101,7 +100,17 @@ bool	Client::getFlagCloseAfterWrite(void) const
 void	Client::clearRequest(void)
 {
 	(this->getRequest()).clear();
+	return ;
+}
+
+void	Client::clearHeader(void)
+{
 	(this->getHeader()).clear();
+	return ;
+}
+
+void	Client::clearBody(void)
+{
 	(this->getBody()).clear();
 	return ;
 }
@@ -111,12 +120,6 @@ void	Client::setFlagHeaderComplete(bool flag)
 	this->_flagHeaderComplete = flag;
 	return ;
 }
-
-/*void	Client::setFlagOversize(bool flag)
-{
-	this->_flagOversize = flag;
-	return ;
-}*/
 
 void	Client::setMaxBodySize(int size)
 {

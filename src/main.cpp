@@ -6,7 +6,7 @@
 /*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/25 19:08:32 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/26 10:00:15 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,14 +29,15 @@ static void		writeSocket(int fd, Config* configFromFd[], t_fdSets* fdSets,
 
 static void		processRequest(Client* client, Config *config);
 
-static std::string	getServName(Config *config);
+static std::string	getServName(Config* config);
 
-static bool	isRequestComplete(std::string const& request);
+static bool	isRequestComplete(Client* client);
 
-static bool	isHeaderComplete(std::string const& requestStr, std::string& header,
-	std::string& body);
+static bool	isHeaderComplete(Client* client);
 
-static bool	isChunkedBodyComplete(std::string& body);
+static bool	isChunkedBodyComplete(std::string const& body);
+
+static void	prepareErrorResponse(Client *client);
 
 int main(int argc, char **argv)
 {
@@ -174,6 +175,7 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 	
 	int		bufSize = MAX_HEADER_SIZE + client->getMaxBodySize() + 1;
 	char*	buf = new char[bufSize];
+	memset(buf, 0, bufSize);
 	int		nBytesRead = recv(fd, buf, bufSize, 0);
 	if (nBytesRead <= 0)
 	{
@@ -188,16 +190,19 @@ static void	readSocket(int fd, Config* configFromFd[], t_fdSets* fdSets, Client*
 		delete [] buf;
 		return ;
 	}
+	//std::string bufStr; // just for display
+	//bufStr.append(buf, nBytesRead);
 	(client->getRequest()).append(buf, nBytesRead);
 	client->setNBytesRec(nBytesRead);
 	std::cout << buf << "===" << std::endl; // tmp
+	//std::cout << bufStr << "===" << std::endl; // tmp
 	try	
 	{
 		processRequest(client, config);
 	}
 	catch (std::exception const& e)
 	{
-		//print msg and prep error response
+		std::cout << e.what() << std::endl;
 		prepareErrorResponse(client);
 	}
 	delete [] buf;
@@ -311,14 +316,8 @@ static void	processRequest(Client* client, Config *config)
 	HttpResponse response;
 	client->setFlagResponse(true); //set to true by default and switch off if necessary
 	
-	//|| (client->getRequest()).size() > max_size) // only last check sufficient?
 	if (client->getNBytesRec() > max_size)
-	{
-		throw std::runtime_error("N bytes read over max size");
-		//response.set_version("HTTP/1.1"); // should send error page instead
-		//response.set_status(400, "Bad Request: too big.");
-		//client->setFlagCloseAfterWrite(true); // flag to close connect after writing response
-	}
+		throw std::runtime_error("Error: number of bytes read over max allowed size (HEADER + BODY)");
 	else if (!isRequestComplete(client))
 	{
 		client->setFlagResponse(false);
@@ -327,7 +326,7 @@ static void	processRequest(Client* client, Config *config)
 	}
 	else
 	{	
-		HttpRequest request(client->getRequest());
+		HttpRequest request((client->getHeader()).append(client->getBody()));
 		
 		if (request.get_method() == Http::Methods::GET) 
 		{
@@ -346,6 +345,7 @@ static void	processRequest(Client* client, Config *config)
 		} 
 		else
 		{
+			//should try to return error file instead
 			response.set_version("HTTP/1.1");
 			response.set_status(405, "Method Not Allowed");
 			client->setFlagCloseAfterWrite(true);
@@ -355,20 +355,23 @@ static void	processRequest(Client* client, Config *config)
 	std::cout << "==== Prepared response ====" << std::endl
 		<< response.to_string() << "\n==================" << std::endl; //tmp for debug
 	client->setResponse(response.to_string());
-	client->clearRequest(); //also clears header and body
+	client->clearRequest();
+	client->clearHeader();
+	client->clearBody();
 	client->setFlagHeaderComplete(false);
-	//client->setFlagOversize(false);
 	return ;
 }
 
 // quite some unnecesarry repeated operations in current design...
-// could use flags to avoid
-static bool	isRequestComplete(client *client)
+static bool	isRequestComplete(Client *client)
 {
 	if (!isHeaderComplete(client))
 		return (false);
+	
+	(client->getBody()).append(client->getRequest());
+	client->clearRequest();
 
-	HttpRequest	request(client.getHeader());
+	HttpRequest	request(client->getHeader());
 	if (request.get_method() != Http::Methods::POST) 
 		return (true); //we only accept body with POST method
 	//Note, if two requests are sent in same chunk, the second one would be ignored 
@@ -380,7 +383,9 @@ static bool	isRequestComplete(client *client)
 		unsigned int bodySize = atoi(headerMap["Content-Length"].c_str());
 
 		if (bodySize > client->getMaxBodySize())
-			throw std::runtime_error("bodysize specified in header over max body size");
+			throw std::runtime_error("Error: bodysize specified in header is over maximum allowed.");
+		if (client->getBody().length() > client->getMaxBodySize()) // this would only happen if sent body is over the size specified in header 
+			throw std::runtime_error("Error: bodysize is over maximum allowed.");
 		if (client->getBody().length() < bodySize)
 			return (false);
 		return (true);
@@ -388,6 +393,8 @@ static bool	isRequestComplete(client *client)
 	else if (headerMap.count("Transfer-Encoding")
 		&& headerMap["Transfer-Encoding"].compare("chunked"))	
 	{
+		if (client->getBody().length() > client->getMaxBodySize()) 
+			throw std::runtime_error("Error: bodysize is over maximum allowed.");
 		if (isChunkedBodyComplete(client->getBody()))
 			return (true);
 		return (false);
@@ -411,14 +418,17 @@ static bool	isHeaderComplete(Client *client)
 	{
 		header = requestStr.substr(0, pos + ending.length());
 		if (header.size() > MAX_HEADER_SIZE)
-			throw std::runtime_error("request header size too big");
+			throw std::runtime_error("Error: header size over the max allowed size.");
 		client->getHeader() = header;
 		std::cout << "===PARSED FULL HEADER BELOW===\n" << client->getHeader() 
 			<< "===" << std::endl;
 		if (requestStr.length() > header.length())
 			client->getBody() = requestStr.substr(pos + ending.length());
+		client->clearRequest(); //need to mod fct to clear only request
 		return (true);
 	}
+	else if (requestStr.size() > MAX_HEADER_SIZE)
+		throw std::runtime_error("Error: header size over the max allowed size.");
 	return (false);
 }
 

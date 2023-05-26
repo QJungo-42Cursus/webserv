@@ -6,7 +6,7 @@
 /*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:55:07 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/25 18:40:55 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/26 09:19:53 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,6 @@ class Client
 		int							getMaxBodySize(void);
 		
 		bool						getFlagHeaderComplete(void) const;
-		//bool						getFlagOversize(void) const;
 		int							getNBytesRec(void) const;
 		bool						getFlagResponse(void) const;
 		std::string const&			getResponse(void) const;
@@ -49,9 +48,10 @@ class Client
 		void						setFlagCloseAfterWrite(bool);
 		
 		void						setFlagHeaderComplete(bool);
-		//void						setFlagOversize(bool);
 		
 		void						clearRequest(void);
+		void						clearHeader(void);
+		void						clearBody(void);
 		void						clearResponse(void);
 
 	private:
@@ -66,7 +66,6 @@ class Client
 		std::string				_header; // just the header
 		std::string				_body; // just the body
 		bool					_flagHeaderComplete;
-		//bool					_flagOversize; //either header or body	
 		int						_maxBodySize;
 
 		int						_nBytesRec;
