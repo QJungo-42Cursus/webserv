@@ -213,7 +213,5 @@ HttpResponse parseCGIResponse(const std::string &cgiOutput)
 			response.add_header(headerName, headerValue.substr(1));
 		}
 	}
-
 	return response;
 }
-
