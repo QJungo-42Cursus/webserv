@@ -10,18 +10,28 @@ servers:
         - /google/:
             methods: GET
             redirection: www.google.com
+            root: PWD/www/
         - /redirect_to_google/:
             methods: GET
+            root: PWD/www/
             redirection: /google/
         - /redirect_to_index/:
+            root: PWD/www/
             methods: GET
             redirection: /
         - /recursive_redirect/:
+            root: PWD/www/
             methods: GET
             redirection: /recursive_redirect/
         - /mutual_redirect/:
+            root: PWD/www/
             methods: GET
             redirection: /mutual_redirect_2/
         - /mutual_redirect_2/:
             methods: GET
+            root: PWD/www/
             redirection: /mutual_redirect/
+        - /api/:
+            methods: POST GET
+            root: PWD/www/api/
+            cgi: .php /bin/php

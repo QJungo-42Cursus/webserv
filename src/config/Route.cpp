@@ -27,9 +27,10 @@ Route *Route::parse(std::string &route_config, std::string const &route_name) {
     {
         Option<std::string> line = find_key_value_line(route_config, "root", true);
         if (line.isSome())
-            route->root = Option<std::string>::Some(get_value_from_line(line.unwrap()));
+            route->root = get_value_from_line(line.unwrap());
         else
-            route->root = Option<std::string>::Some(get_cwd() + "/www" + route_name);
+			throw std::runtime_error("Invalid config file, root not found in route level");
+//            route->root = Option<std::string>::Some(get_cwd() + "/www" + route_name);
     }
     {
         route->repertory_listing = false;
