@@ -23,7 +23,8 @@ public:
 	};
 	Option<short> methods;
 	Option<std::string> redirection;
-	Option<std::string> root;
+	std::string root;
+//	Option<std::string> root;
 	bool repertory_listing;
 	Option<std::string> index;
 	Option<CgiConfig> cgi;

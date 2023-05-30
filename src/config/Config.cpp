@@ -280,8 +280,7 @@ static std::map<std::string, Route *> parse_routes(std::string &str) {
     }
 
     for (std::map<std::string, Route *>::iterator it = map.begin(); it != map.end(); ++it) {
-        if (it->second->root.isSome())
-            replacePWD(it->second->root.unwrap());
+        replacePWD(it->second->root);
         if (it->second->index.isSome())
             replacePWD(it->second->index.unwrap());
         if (it->second->cgi.isSome())
