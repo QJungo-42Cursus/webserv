@@ -42,7 +42,11 @@
 
 # include "server/HttpResponse.h"
 # include "server/HttpRequest.h"
-# include "server/RequestHandler.h"
+# include "server/request_handler/RequestHandler.h"
+# include "server/request_handler/DeleteRequestHandler.h"
+# include "server/request_handler/PutRequestHandler.h"
+# include "server/request_handler/PostRequestHandler.h"
+# include "server/request_handler/GetRequestHandler.h"
 # include "http/http.h"
 
 /* Functions ***************************************************/

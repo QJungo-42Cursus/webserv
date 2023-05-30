@@ -9,7 +9,7 @@
 #include "server/RequestHeader.h"
 #include "server/HttpResponse.h"
 #include "server/HttpRequest.h"
-#include "server/RequestHandler.h"
+#include "server/request_handler/RequestHandler.h"
 #include "server/Socket.h"
 #include "Config.h"
 #define DEFAULT_CONFIG_FILE_PATH "./config/default.yaml"

@@ -1,7 +1,7 @@
 #ifndef DELETEREQUESTHANDLER_H
 #define DELETEREQUESTHANDLER_H
 
-#include "../RequestHandler.h"
+#include "RequestHandler.h"
 
 class DeleteRequestHandler : public RequestHandler {
 public:

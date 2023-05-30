@@ -1,9 +1,16 @@
 #ifndef REQUESTHANDLER_H
 #define REQUESTHANDLER_H
 
-#include "HttpRequest.h"
-#include "HttpResponse.h"
-#include "../config/Config.h"
+#include "../HttpRequest.h"
+#include "../HttpResponse.h"
+#include "../../config/Config.h"
+
+std::pair<std::string, Option<std::string> > get_path_and_file(const std::string &path);
+std::string dir_listing(std::string const &path, std::string const &uri);
+bool is_path_dir(const std::string &path);
+bool is_path_file(const std::string& path);
+HttpResponse parseCGIResponse(const std::string &cgiOutput);
+std::string get_content_type(const std::string &path);
 
 class RequestHandler {
 public:
@@ -19,20 +26,6 @@ protected:
     std::string             create_error_html(int error_code, const std::string& error_phrase) const;
     Option<HttpResponse>    parse(const HttpRequest& request);
     HttpResponse            handle_redirection(const Route* route);
-};
-
-class GetRequestHandler : public RequestHandler {
-public:
-    GetRequestHandler(const Config* config);
-
-    virtual HttpResponse handle_request(const HttpRequest& request);
-};
-
-class PostRequestHandler : public RequestHandler {
-public:
-    PostRequestHandler(const Config* config);
-
-    virtual HttpResponse handle_request(const HttpRequest& request);
 };
 
 #endif
