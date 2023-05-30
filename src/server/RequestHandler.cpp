@@ -175,6 +175,43 @@ GetRequestHandler::GetRequestHandler(
 		const Config *config) : RequestHandler(config)
 {}
 
+HttpResponse parseCGIResponse(const std::string &cgiOutput) {
+    HttpResponse response;
+    
+	response.set_status(200, "OK");
+    // Split headers and body
+    std::string::size_type separatorPos = cgiOutput.find("\r\n\r\n");
+    std::string headersStr = cgiOutput.substr(0, separatorPos);
+    std::string body = cgiOutput.substr(separatorPos + 4);
+
+    // Split headers
+    std::istringstream headersStream(headersStr);
+    std::string headerLine;
+    while (std::getline(headersStream, headerLine)) {
+        std::string::size_type colonPos = headerLine.find(": ");
+        if (colonPos != std::string::npos) {
+            std::string headerName = headerLine.substr(0, colonPos);
+            std::string headerValue = headerLine.substr(colonPos + 2);
+            
+            if (headerName == "Status") {
+                // Parse status code and reason phrase
+                std::istringstream statusStream(headerValue);
+                int statusCode;
+                std::string reasonPhrase;
+                statusStream >> statusCode;
+                std::getline(statusStream, reasonPhrase);
+                response.set_status(statusCode, reasonPhrase);
+            } else {
+                response.add_header(headerName, headerValue);
+            }
+        }
+    }
+    
+    response.set_body(body);
+
+    return response;
+}
+
 
 static bool is_path_dir(const std::string &path) {
 	struct stat s;
@@ -272,6 +309,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
     std::string route_root;
 
 	requested_path = request.get_path();
+	requested_path.erase(requested_path.find_last_not_of("%20")+1);
 	route_path = route->name;
 	route_root = route->root;
 
@@ -323,9 +361,8 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 		bool good_extension = requested_path.rfind(cgi.file_extension) == (requested_path.size() - cgi.file_extension.size());
 		if (good_extension) {
         	std::string cgi_response = CgiExecutor::execute(request, *config_, cgi);
-			response.set_body(cgi_response);
-			response.set_status(200, "OK");
-			return response;
+			HttpResponse cgi_res = parseCGIResponse(cgi_response);
+			return cgi_res;
 		}
 	}
 
