@@ -266,9 +266,6 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 		return handle_redirection(route);
 	}
 
-	if (route->root.isNone()) {
-		return handle_error(404, "Not Found, no route");
-	}
 
 	std::string requested_path;
   	std::string route_path;
@@ -276,7 +273,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 
 	requested_path = request.get_path();
 	route_path = route->name;
-	route_root = route->root.unwrap();
+	route_root = route->root;
 
 	if (route_root[route_root.size() - 1] != '/')
 			route_root += '/';

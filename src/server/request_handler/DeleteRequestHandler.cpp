@@ -22,11 +22,7 @@ std::string DeleteRequestHandler::handle_request_str(const HttpRequest &request)
         // TODO return the string and not the response ??
     } else {
         std::string file_path;
-        if (route->root.isSome()) {
-            file_path = route->root.unwrap() + request.get_path();
-        } else {
-            file_path = request.get_path();
-        }
+        file_path = route->root + request.get_path();
         if (std::remove(file_path.c_str()) != 0) {
             response.set_status(500, "Internal Server Error");
         } else {
