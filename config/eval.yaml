@@ -13,6 +13,10 @@ servers:
             #index: youpi.bla # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
         - /post_body/:
             methods: POST
+            root: PWD/www/
+        - /put_test/:
+            methods: POST
+            root: PWD/www/
         - /directory/:
             methods: GET
             root: PWD/www/YoupiBanane/
