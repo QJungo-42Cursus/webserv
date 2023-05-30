@@ -89,8 +89,11 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
         bool good_extension = requested_path.rfind(cgi.file_extension) == (requested_path.size() - cgi.file_extension.size());
         if (good_extension) {
             std::string cgi_response = CgiExecutor::execute(request, *config_, cgi, *route);
-            HttpResponse cgi_res = parseCGIResponse(cgi_response);
-            return cgi_res;
+            // HttpResponse cgi_res = parseCGIResponse(cgi_response);
+            response.set_body(cgi_response);
+            response.set_status(200, "OK");
+            response.add_header("Content-Type", "text/html");
+            return response;
         }
     }
 
