@@ -18,7 +18,7 @@ std::string DeleteRequestHandler::handle_request_str(const HttpRequest &request)
 
     if (route->cgi.isSome()) {
         const CgiConfig &cgi = route->cgi.unwrap();
-        std::string cgi_response = CgiExecutor::execute(request, *config_, cgi);
+        std::string cgi_response = CgiExecutor::execute(request, *config_, cgi, *route);
         // TODO return the string and not the response ??
     } else {
         std::string file_path;

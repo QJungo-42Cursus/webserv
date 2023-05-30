@@ -88,7 +88,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
         const CgiConfig &cgi = route->cgi.unwrap();
         bool good_extension = requested_path.rfind(cgi.file_extension) == (requested_path.size() - cgi.file_extension.size());
         if (good_extension) {
-            std::string cgi_response = CgiExecutor::execute(request, *config_, cgi);
+            std::string cgi_response = CgiExecutor::execute(request, *config_, cgi, *route);
             HttpResponse cgi_res = parseCGIResponse(cgi_response);
             return cgi_res;
         }

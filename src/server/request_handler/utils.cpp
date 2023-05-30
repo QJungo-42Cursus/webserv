@@ -23,15 +23,15 @@ bool is_path_file(const std::string& path) {
     return false;
 }
 
-std::string real_path(const Route *route, const HttpRequest& request) {
+std::string real_path(const Route &route, const HttpRequest& request) {
     std::string requested_path;
     std::string route_path;
     std::string route_root;
 
     requested_path = request.get_path();
     requested_path.erase(requested_path.find_last_not_of("%20")+1);
-    route_path = route->name;
-    route_root = route->root;
+    route_path = route.name;
+    route_root = route.root;
 
     if (route_root[route_root.size() - 1] != '/')
         route_root += '/';
@@ -49,7 +49,7 @@ std::string real_path(const Route *route, const HttpRequest& request) {
         requested_path.erase(requested_path.size() - 1);
 
     bool is_directory = is_path_dir(requested_path);
-    if (requested_path[requested_path.size() - 1] != '/')
+    if (is_directory && requested_path[requested_path.size() - 1] != '/')
             requested_path += '/';
     return requested_path;
 }

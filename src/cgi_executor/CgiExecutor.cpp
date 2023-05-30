@@ -9,6 +9,8 @@
 #include <ctime>
 #include <sstream>
 
+#include "../server/request_handler/RequestHandler.h"
+
 static int fork1() {
     int pid = fork();
     if (pid == -1)
@@ -16,7 +18,7 @@ static int fork1() {
     return pid;
 }
 
-static std::map<std::string, std::string> get_env(const HttpRequest &request, const Config &config) {
+static std::map<std::string, std::string> get_env(const HttpRequest &request, const Config &config, const Route &route) {
     std::map<std::string, std::string> env;
     std::map<std::string, std::string> headers = request.get_headers();
 
@@ -40,17 +42,19 @@ static std::map<std::string, std::string> get_env(const HttpRequest &request, co
         env["REQUEST_METHOD"] = "POST";
     else if (method | Http::Methods::DELETE)
         env["REQUEST_METHOD"] = "DELETE";
-//	env["PATH_INFO"] = request.get_path(); // TODO pas sur
-    env["PATH_INFO"] = "/home/qjungo/Cursus/webserv/www/super.bla"; // TODO pas sur
-    env["PATH_TRANSLATED"] = request.get_path(); // TODO pas sur
-    env["SCRIPT_NAME"] = config.routes.find(request.get_path())->second->cgi.unwrap().cgi_path; // TODO pas sur
-//	env["QUERY_STRING"] // TODO add query string
+	env["PATH_INFO"] = request.get_path();
+
+    env["SCRIPT_NAME"] = real_path(route, request);
+//	env["QUERY_STRING"]
     if (headers.count("Host"))
-        env["REMOTE_HOST"] = headers["Host"]; // TODO pas sur
+        env["REMOTE_HOST"] = headers["Host"];
     else
         env["REMOTE_HOST"] = "";
+
+
+
     if (headers.count("Host"))
-        env["REMOTE_ADDR"] = headers["Host"]; // TODO pas sur
+        env["REMOTE_ADDR"] = headers["Host"];
     else
         env["REMOTE_ADDR"] = "";
     env["AUTH_TYPE"] = "";
@@ -90,18 +94,22 @@ static void free_env(char **envp) {
     delete[] envp;
 }
 
-std::string CgiExecutor::execute(const HttpRequest &request, const Config &config, const CgiConfig &cgi_config) {
-    std::map<std::string, std::string> env = get_env(request, config);
+std::string CgiExecutor::execute(const HttpRequest &request, const Config &config, const CgiConfig &cgi_config, const Route &route) {
+    std::map<std::string, std::string> env = get_env(request, config, route);
+//    std::cout << "before crosh in exec" << std::endl;
     char **envp = map_to_env(env);
-    std::string cgi_path = config.routes.find(request.get_path())->second->cgi.unwrap().cgi_path;
+    std::string cgi_path = route.cgi.unwrap().cgi_path;
     std::string request_path = request.get_path();
-    request_path = "/home/qjungo/Cursus/webserv/www/super.bla";
+    request_path = real_path(route, request);
+    std::cout << "request path: " << request_path << std::endl;
 
     char *const argv[] = {
             new char[cgi_path.size() + 1],
             new char[request_path.size() + 1],
             NULL
     };
+
+
     strcpy(argv[0], cgi_path.c_str());
     argv[0][cgi_path.size()] = '\0';
     strcpy(argv[1], request_path.c_str());
