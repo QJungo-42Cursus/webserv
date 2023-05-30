@@ -49,7 +49,8 @@ std::string real_path(const Route &route, const HttpRequest& request) {
         requested_path.erase(requested_path.size() - 1);
 
     bool is_directory = is_path_dir(requested_path);
-    if (is_directory && requested_path[requested_path.size() - 1] != '/')
+    
+    if (requested_path[requested_path.size() - 1] != '/')
             requested_path += '/';
     return requested_path;
 }
@@ -114,39 +115,37 @@ std::string get_content_type(const std::string &path) {
     return "text/plain";
 }
 
-HttpResponse parseCGIResponse(const std::string &cgiOutput) {
+HttpResponse parseCGIResponse(const std::string& cgi_response) {
     HttpResponse response;
+    
+    std::size_t body_start = cgi_response.find("\r\n\r\n");
+    if (body_start == std::string::npos) {
+        response.set_body(cgi_response);
+    } else {
+        response.set_body(cgi_response.substr(body_start + 4));
 
-    response.set_status(200, "OK");
-    // Split headers and body
-    std::string::size_type separatorPos = cgiOutput.find("\r\n\r\n");
-    std::string headersStr = cgiOutput.substr(0, separatorPos);
-    std::string body = cgiOutput.substr(separatorPos + 4);
+        // Processing headers
+        std::istringstream headers_stream(cgi_response.substr(0, body_start));
+        std::string header_line;
 
-    // Split headers
-    std::istringstream headersStream(headersStr);
-    std::string headerLine;
-    while (std::getline(headersStream, headerLine)) {
-        std::string::size_type colonPos = headerLine.find(": ");
-        if (colonPos != std::string::npos) {
-            std::string headerName = headerLine.substr(0, colonPos);
-            std::string headerValue = headerLine.substr(colonPos + 2);
+        while (std::getline(headers_stream, header_line)) {
+            std::size_t separator_pos = header_line.find(":");
+            if (separator_pos != std::string::npos) {
+                std::string header_name = header_line.substr(0, separator_pos);
+                std::string header_value = header_line.substr(separator_pos + 1);
 
-            if (headerName == "Status") {
-                // Parse status code and reason phrase
-                std::istringstream statusStream(headerValue);
-                int statusCode;
-                std::string reasonPhrase;
-                statusStream >> statusCode;
-                std::getline(statusStream, reasonPhrase);
-                response.set_status(statusCode, reasonPhrase);
-            } else {
-                response.add_header(headerName, headerValue);
+                if (header_name == "Status") {
+                    std::size_t status_end = header_value.find(" ");
+                    std::string status_code = header_value.substr(1, status_end - 1);
+                    std::string status_text = header_value.substr(status_end + 1);
+                    response.set_status(std::stoi(status_code), status_text);
+                }
+                else {
+                    response.add_header(header_name, header_value.substr(1));
+                }
             }
         }
     }
-
-    response.set_body(body);
 
     return response;
 }

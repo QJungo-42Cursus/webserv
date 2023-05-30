@@ -13,10 +13,6 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
     }
     HttpResponse response;
 
-    std::pair<std::string, Option<std::string> > path_and_file = get_path_and_file(
-            request.get_path()
-    );
-
     Route *route = find_route(request.get_path());
 
     if (route == NULL) {
@@ -31,30 +27,9 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
         return handle_redirection(route);
     }
 
-
     std::string requested_path;
-    std::string route_path;
-    std::string route_root;
 
-    requested_path = request.get_path();
-    requested_path.erase(requested_path.find_last_not_of("%20")+1);
-    route_path = route->name;
-    route_root = route->root;
-
-    if (route_root[route_root.size() - 1] != '/')
-        route_root += '/';
-
-    if (requested_path[requested_path.size() - 1] != '/')
-        requested_path += '/';
-
-    size_t pos = requested_path.find(route_path);
-
-    if (pos != std::string::npos) {
-        requested_path.replace(pos, route_path.length(), route_root);
-    }
-
-    if (requested_path[requested_path.size() - 1] == '/')
-        requested_path.erase(requested_path.size() - 1);
+    requested_path = real_path(*route, request);
 
     bool is_file = is_path_file(requested_path);
     bool is_directory = is_path_dir(requested_path);
@@ -62,11 +37,8 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
     if (!is_file && !is_directory)
         return handle_error(404, "Not Found");
 
-
     if (!is_file && is_directory)
     {
-        if (requested_path[requested_path.size() - 1] != '/')
-            requested_path += '/';
         if (route->repertory_listing) {
             response.set_body(dir_listing(requested_path, request.get_path()));
             response.set_status(200, "OK");
@@ -82,9 +54,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
         }
     }
 
-    std::ifstream file(requested_path.c_str(), std::ios::in | std::ios::binary);
-
-    if (route->cgi.isSome()) {
+    else if (is_file && route->cgi.isSome()) {
         const CgiConfig &cgi = route->cgi.unwrap();
         bool good_extension = requested_path.rfind(cgi.file_extension) == (requested_path.size() - cgi.file_extension.size());
         if (good_extension) {
@@ -96,6 +66,10 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
             return response;
         }
     }
+    
+    
+    std::ifstream file(requested_path.c_str(), std::ios::in | std::ios::binary);
+
 
     if (!file) {
         return handle_error(404, "Not Found");
