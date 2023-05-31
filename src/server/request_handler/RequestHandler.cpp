@@ -26,6 +26,21 @@ HttpResponse RequestHandler::handle_redirection(const Route* route) {
     return response;
 }
 
+Route * RequestHandler::getRouteOrThrowResponse(const HttpRequest &request)
+{
+    Option<HttpResponse> res = checkRequestValidity(request);
+    if (res.isSome())
+        throw res.unwrap();
+    Route *route = find_route(request.get_path());
+    if (route == NULL)
+        throw handle_error(404, "Not Found (route)");
+    if (!is_method_allowed(route, request))
+        throw handle_error(405, "Method Not Allowed");
+    if (route->redirection.isSome())
+        throw handle_redirection(route);
+    return route;
+}
+
 Option<HttpResponse> RequestHandler::checkRequestValidity(const HttpRequest& request) {
         std::istringstream  request_stream(request.get_raw());
         std::string         method;
