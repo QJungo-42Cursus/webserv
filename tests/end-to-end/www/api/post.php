@@ -1,5 +1,6 @@
 <?php
 
+// $line = "stdin";
 $line = trim(fgets(STDIN));
 $message = "<html><body><h1>hello</h1><p>you sent a GET request, good job</p><p>you sent me: " . $line . "</p> </body></html>";
 
