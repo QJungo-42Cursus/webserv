@@ -26,7 +26,7 @@ HttpResponse RequestHandler::handle_redirection(const Route* route) {
     return response;
 }
 
-Option<HttpResponse> RequestHandler::parse(const HttpRequest& request) {
+Option<HttpResponse> RequestHandler::checkRequestValidity(const HttpRequest& request) {
         std::istringstream  request_stream(request.get_raw());
         std::string         method;
         std::string         uri;

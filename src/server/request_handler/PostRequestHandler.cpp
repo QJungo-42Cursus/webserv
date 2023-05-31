@@ -1,7 +1,3 @@
-//
-// Created by qjungo on 5/30/23.
-//
-
 #include "PostRequestHandler.h"
 
 HttpResponse PostRequestHandler::handle_request(const HttpRequest &request)
