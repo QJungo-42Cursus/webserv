@@ -26,8 +26,11 @@ protected:
     Route*                  find_route(const std::string& requested_path) const;
     bool                    is_method_allowed(const Route* route, const HttpRequest& request);
     std::string             create_error_html(int error_code, const std::string& error_phrase) const;
-    Option<HttpResponse>    parse(const HttpRequest& request);
+    Option<HttpResponse>    checkRequestValidity(const HttpRequest& request);
     HttpResponse            handle_redirection(const Route* route);
+
+    Route * getRouteOrThrowResponse(const HttpRequest &request);
+
 };
 
 #endif

@@ -1,29 +1,38 @@
 #include "GetRequestHandler.h"
 #include "../../cgi_executor/CgiExecutor.h"
 
+
+Route * RequestHandler::getRouteOrThrowResponse(const HttpRequest &request)
+{
+    Option<HttpResponse> res = checkRequestValidity(request);
+    if (res.isSome())
+        throw res.unwrap();
+    Route *route = find_route(request.get_path());
+    if (route == NULL)
+        throw handle_error(404, "Not Found (route)");
+    if (!is_method_allowed(route, request))
+        throw handle_error(405, "Method Not Allowed");
+    if (route->redirection.isSome())
+        throw handle_redirection(route);
+    return route;
+}
+
 HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 {
-	Option<HttpResponse> res = parse(request);
-	if (res.isSome())
-	{
-		return (res.unwrap());
-	}
-
-	HttpResponse response;
-	Route *route = find_route(request.get_path());
-
-	if (route == NULL)
-	{
-		return handle_error(404, "Not Found (route)");
-	}
-	if (!is_method_allowed(route, request))
-	{
-		return handle_error(405, "Method Not Allowed");
-	}
-	if (route->redirection.isSome())
-	{
-		return handle_redirection(route);
-	}
+    // TODO: en commun ========================================================
+	Route *route;
+    try
+    {
+        route = getRouteOrThrowResponse(request);
+    }
+    catch (HttpResponse &response)
+    {
+        return response;
+    }
+    catch (std::exception &e)
+    {
+        return handle_error(500, "Internal Server Error : " + std::string(e.what()));
+    }
 
 	std::string requested_path = real_path(*route, request);
 	if (requested_path.empty())
@@ -44,6 +53,9 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 	if (!is_file && !is_directory)
 		return handle_error(404, "Not Found (file/dir)");
 
+    // ========================================================================
+
+	HttpResponse response;
 	if (is_directory)
 	{
 		requested_path += "/";
