@@ -5,7 +5,6 @@
 
 HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 {
-    // TODO: en commun ========================================================
 	Route *route;
     try
     {
@@ -15,22 +14,12 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
     {
         return response;
     }
-    catch (std::exception &e)
-    {
-        return handle_error(500, "Internal Server Error : " + std::string(e.what()));
-    }
-
 	std::string requested_path = real_path(*route, request);
-
-	std::cout << std::endl << "Requested path: " << requested_path << std::endl;
-
 	bool is_file = is_path_file(requested_path);
 	bool is_directory = is_path_dir(requested_path);
-
 	if (!is_file && !is_directory)
 		return handle_error(404, "Not Found (file/dir)");
 
-    // ========================================================================
 
 	HttpResponse response;
 	if (is_directory)

@@ -2,16 +2,28 @@
 
 HttpResponse PostRequestHandler::handle_request(const HttpRequest &request)
 {
+    Route *route;
+    try
+    {
+        route = getRouteOrThrowResponse(request);
+    }
+    catch (HttpResponse &response)
+    {
+        return response;
+    }
+    std::string requested_path = real_path(*route, request);
+    bool is_file = is_path_file(requested_path);
+    bool is_directory = is_path_dir(requested_path);
+    if (!is_file && !is_directory)
+        return handle_error(404, "Not Found (file/dir)");
+
     HttpResponse response;
 
-    Route *route = find_route(request.get_path());
-    if (route == NULL) {
-        return handle_error(404, "Not Found");
-    }
 
-    if (!is_method_allowed(route, request)) {
-        return handle_error(405, "Method Not Allowed");
-    }
+
+
+
+
 
     // TODO: POST HANDLER
     response.set_status(200, "OK");
