@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tplanes <tplanes@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: qlentz <qlentz@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 16:22:46 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/26 15:46:19 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/31 15:01:30 by qlentz           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -351,7 +351,12 @@ static void	processRequest(Client* client, Config *config)
 	{
 		DeleteRequestHandler delete_handler(config);
 		response = delete_handler.handle_request(request); // TODO
-	} 
+	}
+	else if (request.get_method() == Http::Methods::PUT)
+	{
+		PutRequestHandler put_handler(config);
+		response = put_handler.handle_request(request);
+	}
 	else
 	{
 		GetRequestHandler	rh(config); //nb could create a specific child error class

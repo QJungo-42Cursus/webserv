@@ -47,7 +47,7 @@ void HttpRequest::parse_request(const std::string& raw_request) {
     }
 
     // Parse body (if any)
-    if (method_ == Http::Methods::POST) {
+    if (method_ == Http::Methods::POST || method_ == Http::Methods::PUT) {
         std::getline(request_stream, body_);
     }
 }
@@ -63,6 +63,8 @@ void HttpRequest::parse_request_line(const std::string& line) {
         method_ = Http::Methods::POST;
     } else if (method_str == "DELETE") {
         method_ = Http::Methods::DELETE;
+    } else if (method_str == "PUT") {
+        method_ = Http::Methods::PUT;
     } else {
         method_ = Http::Methods::UNKNOWN;
     }
