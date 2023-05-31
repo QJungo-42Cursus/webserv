@@ -155,7 +155,7 @@ def main():
     assert_redirect(HOST + "/mutual_redirect", 302, "", 2, True)
     print('cgi call: ')
     assert_get(HOST + "/api/call.ppp", 200, "HI !")
-    assert_get(HOST + "/api/call.php", 200, "HI !")
+    assert_get(HOST + "/api/404.php", 200, "HI !")
     fork.kill()
 
 
