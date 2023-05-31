@@ -36,6 +36,8 @@ Route * RequestHandler::getRouteOrThrowResponse(const HttpRequest &request)
         throw handle_error(404, "Not Found (route)");
     if (!is_method_allowed(route, request))
         throw handle_error(405, "Method Not Allowed");
+    if (check_path(request.get_path()))
+        throw handle_error(403, "Forbidden");
     if (route->redirection.isSome())
         throw handle_redirection(route);
     return route;
