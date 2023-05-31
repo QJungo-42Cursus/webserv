@@ -48,7 +48,9 @@ Option<short> parse_methods(std::string &str)
 			methods |= Http::Methods::POST;
 		else if (*it == "DELETE")
 			methods |= Http::Methods::DELETE;
-		else if (*it == "PUT" || *it == "OPTIONS" || *it == "TRACE" || *it == "PATCH" || *it == "HEAD" ||
+        else if (*it == "PUT")
+            methods |= Http::Methods::PUT;
+		else if ( *it == "OPTIONS" || *it == "TRACE" || *it == "PATCH" || *it == "HEAD" ||
 				 *it == "CONNECT")
 			throw std::runtime_error("Invalid config file, " + *it + " method is not implemented");
 		else

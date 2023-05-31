@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <ctime>
 #include <sstream>
-
 #include "../server/request_handler/RequestHandler.h"
 
 static int fork1()
@@ -31,7 +30,9 @@ static std::map<std::string, std::string> get_env(const HttpRequest &request, co
 
 	/// request related
 	env["SERVER_PROTOCOL"] = request.get_version();
-	env["SERVER_PORT"] = "80";
+    std::stringstream portss;
+    portss << config.port;
+	env["SERVER_PORT"] = portss.str();
 	if (config.port)
 	{
 		std::stringstream port("");
@@ -39,34 +40,24 @@ static std::map<std::string, std::string> get_env(const HttpRequest &request, co
 		env["SERVER_PORT"] = port.str();
 	}
 	int method = request.get_method();
-	if (method | Http::Methods::GET)
+	if (method == Http::Methods::GET)
 		env["REQUEST_METHOD"] = "GET";
-	else if (method | Http::Methods::POST)
+	else if (method == Http::Methods::POST)
 		env["REQUEST_METHOD"] = "POST";
-	else if (method | Http::Methods::DELETE)
+	else if (method == Http::Methods::DELETE)
 		env["REQUEST_METHOD"] = "DELETE";
+    else if (method == Http::Methods::PUT)
+        env["REQUEST_METHOD"] = "PUT";
 	env["PATH_INFO"] = request.get_path();
-
 	env["SCRIPT_NAME"] = real_path(route, request);
-
 	if (headers.count("Host"))
 		env["REMOTE_HOST"] = headers["Host"];
 	else
 		env["REMOTE_HOST"] = "";
-
 //	env["QUERY_STRING"] // TODO
-
-	if (headers.count("Host"))
-		env["REMOTE_ADDR"] = headers["Host"];
-	else
-		env["REMOTE_ADDR"] = "";
-	env["AUTH_TYPE"] = "";
-	env["REMOTE_USER"] = "";
-	env["REMOTE_IDENT"] = "";
+    env["REMOTE_USER"] = headers.count("Host") ? headers["Host"] : "";
 	env["CONTENT_TYPE"] = headers.count("Content-Type") ? headers["Content-Type"] : "";
 	env["CONTENT_LENGTH"] = headers.count("Content-Length") ? headers["Content-Length"] : "";
-
-	/// client related
 	env["HTTP_ACCEPT"] = headers.count("Accept") ? headers["Accept"] : "";
 	env["HTTP_ACCEPT_LANGUAGE"] = headers.count("Accept-Language") ? headers["Accept-Language"] : "";
 	env["HTTP_USER_AGENT"] = headers.count("User-Agent") ? headers["User-Agent"] : "";
@@ -106,8 +97,6 @@ CgiExecutor::execute(const HttpRequest &request, const Config &config, const Cgi
 	std::map<std::string, std::string> env = get_env(request, config, route);
 	char **envp = map_to_env(env);
 	std::string request_path = real_path(route, request);
-//	if (request_path[request_path.size() - 1] == '/')
-//		request_path = request_path.substr(0, request_path.size() - 1);
 
 	char *const argv[] = {
 			new char[cgi_config.cgi_path.size() + 1],
@@ -115,13 +104,11 @@ CgiExecutor::execute(const HttpRequest &request, const Config &config, const Cgi
 			NULL
 	};
 
-
 	strcpy(argv[0], cgi_config.cgi_path.c_str());
 	argv[0][cgi_config.cgi_path.size()] = '\0';
 	strcpy(argv[1], request_path.c_str());
 	argv[1][request_path.size()] = '\0';
 
-	// TODO catch errors !
 	if (access(argv[1], F_OK) == -1)
 		throw std::runtime_error("file not found");
 	if (access(argv[0], X_OK) == -1)

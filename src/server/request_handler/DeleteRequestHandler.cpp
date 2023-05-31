@@ -21,26 +21,33 @@ HttpResponse DeleteRequestHandler::handle_request(const HttpRequest &request)
     if (!is_file && !is_directory)
         return handle_error(404, "Not Found (file/dir)");
 
-	HttpResponse response;
+    HttpResponse response;
 
-
-
-
-	// TODO : mettre en commun ?
-	if (route->cgi.isSome())
-	{
-		const CgiConfig &cgi = route->cgi.unwrap();
-		std::string cgi_str_response = CgiExecutor::execute(request, *config_, cgi, *route);
-		return parseCGIResponse(cgi_str_response);
-	}
-	std::string file_path = real_path(*route, request);
-	if (std::remove(file_path.c_str()) != 0)
-	{
-		response.set_status(500, "Internal Server Error");
-	}
-	else
-	{
-		response.set_status(200, "OK");
-	}
-	return response;
+    if (is_directory)
+        return handle_error(403, "Forbidden (cannot delete directory)");
+    if (route->cgi.isSome())
+    {
+        const CgiConfig &cgi = route->cgi.unwrap();
+        if (requested_path.rfind(cgi.file_extension) == (requested_path.size() - cgi.file_extension.size()))
+        {
+            try
+            {
+                std::string cgi_str_response = CgiExecutor::execute(request, *config_, cgi, *route);
+                return parseCGIResponse(cgi_str_response);
+            }
+            catch (std::exception &e)
+            {
+                return handle_error(500, "Internal Server Error (CGI)");
+            }
+        }
+    }
+    std::string file_path = real_path(*route, request);
+    if (std::remove(file_path.c_str()) != 0)
+    {
+        response.set_status(500, "Internal Server Error");
+    } else
+    {
+        response.set_status(200, "OK");
+    }
+    return response;
 }

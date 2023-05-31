@@ -32,6 +32,6 @@ servers:
             root: PWD/www/
             redirection: /mutual_redirect/
         - /api/:
-            methods: POST GET
+            methods: POST GET DELETE PUT
             root: PWD/www/api/
             cgi: .php /bin/php

@@ -205,8 +205,11 @@ HttpResponse parseCGIResponse(const std::string &cgiOutput)
 		std::string::size_type separatorPosa = it->find(":");
 		if (separatorPosa != std::string::npos)
 		{
+
 			std::string headerName = it->substr(0, separatorPosa);
 			std::string headerValue = it->substr(separatorPosa + 1);
+            if (headerName.find("Content-Length") != std::string::npos)
+                continue;
 			response.add_header(headerName, headerValue.substr(1));
 		}
 	}
