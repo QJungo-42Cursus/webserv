@@ -1,4 +1,5 @@
 #include "PostRequestHandler.h"
+#include "../../cgi_executor/CgiExecutor.h"
 
 HttpResponse PostRequestHandler::handle_request(const HttpRequest &request)
 {
@@ -19,15 +20,36 @@ HttpResponse PostRequestHandler::handle_request(const HttpRequest &request)
 
     HttpResponse response;
 
-
-
-
-
-
-
-    // TODO: POST HANDLER
-    response.set_status(200, "OK");
-    return response;
+    if (is_directory)
+    {
+        if (route->index.isSome()) {
+            requested_path += route->index.unwrap();
+        }    
+        else {
+            return handle_error(403, "Forbidden");
+        }
+    }
+    if (is_path_file(requested_path) && route->cgi.isSome())
+	{
+		const CgiConfig &cgi = route->cgi.unwrap();
+		bool good_extension =
+				requested_path.rfind(cgi.file_extension) == (requested_path.size() - cgi.file_extension.size());
+		if (good_extension)
+		{
+			std::string cgi_response;
+			try
+			{
+				cgi_response = CgiExecutor::execute(request, *config_, cgi, *route);
+			}
+			catch (const std::exception &e)
+			{
+				std::cout << "CgiExecutor::execute: " << e.what() << std::endl;
+				return handle_error(500, "Internal Server Error (CGI)");
+			}
+			return parseCGIResponse(cgi_response);
+		}
+	}
+    return handle_error(403, "Forbidden");
 }
 
 PostRequestHandler::PostRequestHandler(
