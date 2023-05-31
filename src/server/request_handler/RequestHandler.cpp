@@ -55,7 +55,7 @@ Option<HttpResponse> RequestHandler::checkRequestValidity(const HttpRequest& req
         }
 
         // Check if the method is valid
-        if (method != "GET" && method != "POST" && method != "DELETE") {
+        if (method != "GET" && method != "POST" && method != "DELETE" && method != "PUT") {
             return Option<HttpResponse>::Some(handle_error(501, "Not Implemented"));
         }
 
