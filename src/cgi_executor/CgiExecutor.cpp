@@ -106,6 +106,8 @@ CgiExecutor::execute(const HttpRequest &request, const Config &config, const Cgi
 	std::map<std::string, std::string> env = get_env(request, config, route);
 	char **envp = map_to_env(env);
 	std::string request_path = real_path(route, request);
+	if (request_path[request_path.size() - 1] == '/')
+		request_path = request_path.substr(0, request_path.size() - 1);
 
 	char *const argv[] = {
 			new char[cgi_config.cgi_path.size() + 1],
