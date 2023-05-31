@@ -6,7 +6,7 @@
 /*   By: qjungo <qjungo@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/04 16:23:23 by tplanes           #+#    #+#             */
-/*   Updated: 2023/05/26 15:25:42 by tplanes          ###   ########.fr       */
+/*   Updated: 2023/05/31 11:02:48 by tplanes          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@
 #include <cstdlib> // needed for what? forbidden?
 #include <errno.h>
 
-# define BACKLOG 5 // number of connections allowed on incoming queue
+# define BACKLOG 25 // number of connections allowed on incoming queue
 # define MAX_HEADER_SIZE 2048 // max size of header in received request
 //# define MAX_HEADER_SIZE 20 // to test header size error
 
