@@ -58,11 +58,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 				std::cout << "CgiExecutor::execute: " << e.what() << std::endl;
 				return handle_error(500, "Internal Server Error (CGI)");
 			}
-			// HttpResponse cgi_res = parseCGIResponse(cgi_response);
-			response.set_body(cgi_response);
-			response.set_status(200, "OK");
-			response.add_header("Content-Type", "text/html");
-			return response;
+			return parseCGIResponse(cgi_response);;
 		}
 	}
 
