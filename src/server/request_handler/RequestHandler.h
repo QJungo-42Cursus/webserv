@@ -12,6 +12,7 @@ bool is_path_file(const std::string& path);
 HttpResponse parseCGIResponse(const std::string &cgiOutput);
 std::string get_content_type(const std::string &path);
 std::string real_path(const Route &route, const HttpRequest& request);
+bool check_path(const std::string& path);
 
 class RequestHandler {
 public:

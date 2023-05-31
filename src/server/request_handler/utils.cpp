@@ -27,6 +27,18 @@ bool is_path_file(const std::string &path)
 	return false;
 }
 
+bool check_path(const std::string& path) {
+    std::stringstream ss(path);
+    std::string segment;
+    while (std::getline(ss, segment, '/')) {
+        if (segment == "..") {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 std::string real_path(const Route &route, const HttpRequest &request)
 {
 	std::string requested_path;
