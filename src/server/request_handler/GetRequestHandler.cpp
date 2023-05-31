@@ -21,15 +21,6 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
     }
 
 	std::string requested_path = real_path(*route, request);
-	if (requested_path.empty())
-	{
-		return handle_error(404, "Not Found (path)");
-	}
-	if (*(requested_path.end() - 1) == '/')
-	{
-		// on doit l'enlever pour les fichiers (sinon le is_path_file ne marche pas)
-		requested_path = requested_path.substr(0, requested_path.size() - 1);
-	}
 
 	std::cout << std::endl << "Requested path: " << requested_path << std::endl;
 
@@ -52,22 +43,16 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 			response.add_header("Content-Type", "text/html");
 			return response;
 		}
-		else if (route->index.isSome() /* && is_path_root_of_route */ )
+		else if (route->index.isSome())
 		{
-			// TODO dans le cas ou la route est definie en arriere
-			//	example : route '/', recherche '/photo/' -> la route est donc '/'
-			//	si un index est defini, ne devrait t'il pas marche qu'avec la racine de la route ?
 			requested_path += route->index.unwrap();
-			std::cout << "Index path: " << requested_path << std::endl;
-
-			// TODO ne rentre pas dans le cgi ?
 		}
 		else
 		{
 			return handle_error(403, "Forbidden");
 		}
 	}
-	else if (route->cgi.isSome())
+	if (is_path_file(requested_path) && route->cgi.isSome())
 	{
 		const CgiConfig &cgi = route->cgi.unwrap();
 		bool good_extension =

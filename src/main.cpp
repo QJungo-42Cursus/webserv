@@ -350,7 +350,7 @@ static void	processRequest(Client* client, Config *config)
 	else if (request.get_method() == Http::Methods::DELETE)
 	{
 		DeleteRequestHandler delete_handler(config);
-		std::string response_str = delete_handler.handle_request_str(request);
+		response = delete_handler.handle_request(request); // TODO
 	} 
 	else
 	{

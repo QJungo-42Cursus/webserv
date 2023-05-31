@@ -53,10 +53,7 @@ std::string real_path(const Route &route, const HttpRequest &request)
 
 	if (requested_path[requested_path.size() - 1] == '/')
 		requested_path.erase(requested_path.size() - 1);
-
-	bool is_directory = is_path_dir(requested_path);
-
-	if (requested_path[requested_path.size() - 1] != '/')
+	if (is_path_dir(requested_path) && requested_path[requested_path.size() - 1] != '/')
 		requested_path += '/';
 	return requested_path;
 }
