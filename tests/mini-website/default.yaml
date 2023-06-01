@@ -1,0 +1,10 @@
+servers:
+  - server:
+      server_name: domain1.com
+      port: 8080
+      client_max_body_size: 2k
+      routes:
+        - /:
+            methods: GET POST DELETE
+            root: PWD/www/
+            index: index.html

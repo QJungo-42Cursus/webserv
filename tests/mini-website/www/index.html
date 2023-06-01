@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Form</title>
+</head>
+<body>
+
+<h2>Submit Information</h2>
+
+<form action="php_cgi.php" method="post">
+  <label for="fname">First name:</label><br>
+  <input type="text" id="fname" name="fname"><br>
+  <label for="lname">Last name:</label><br>
+  <input type="text" id="lname" name="lname"><br>
+  <input type="submit" value="Submit">
+</form> 
+
+<button onclick="sendGetRequest()">See Data</button>
+<button onclick="sendDeleteRequest()">Delete Last Entry</button>
+
+<script>
+    function sendGetRequest() {
+        window.location.href = 'php_cgi.php';
+    }
+    
+    function sendDeleteRequest() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('DELETE', 'php_cgi.php', true);
+        xhr.onload = function () {
+            if (xhr.readyState == 4 && xhr.status == '200') {
+                console.log('Delete request sent');
+                sendGetRequest(); // Refresh the page with GET request after DELETE
+            } else {
+                console.error('Error sending DELETE request');
+            }
+        }
+        xhr.send(null);
+    }
+</script>
+
+</body>
+</html>
