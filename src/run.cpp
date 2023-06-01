@@ -79,7 +79,7 @@ bool readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *client
 		return false;
 	}
 	client->getRequest().append(buf, nBytesRead);
-	std::cout << buf << "===" << std::endl; // tmp
+	std::cout << std::string(buf).substr(0, 2000) << "===" << std::endl; // tmp
 	delete[] buf;
 	client->setNBytesRec(nBytesRead);
     bool exit = false;
@@ -325,7 +325,7 @@ static bool isHeaderComplete(Client *client)
 		client->getHeader() = header;
 		std::cout << "===PARSED FULL HEADER BELOW===\n" << client->getHeader()
 				  << "===" << std::endl;
-		getchar();
+		// getchar();
 		client->setFlagHeaderComplete(true);
 		if (requestStr.length() > header.length())
 			client->getBody() = requestStr.substr(pos + ending.length());
@@ -334,8 +334,6 @@ static bool isHeaderComplete(Client *client)
 	}
 	else if (requestStr.size() > MAX_HEADER_SIZE)
 	{
-		std::cout << "===PARSED FULL R. BELOW===\n" << client->getRequest().substr(0, MAX_HEADER_SIZE)
-				  << "===" << std::endl;
 		throw RequestHandler::handle_error_static(413, "Payload Too Large  (max header size exceded, with chunked header)", NULL);
 	} 	
 		
@@ -353,7 +351,7 @@ static bool isChunkedBodyComplete(std::string const &body)
 	if (pos != std::string::npos)
 	{
 		std::cout << "===END OF CHUNKED BODY (BELOW) DETECTED===\n"
-				  << body << "===" << std::endl;
+				  << body.substr(0, 2000) << "===" << std::endl;
 		return (true);
 	}
 	return (false);

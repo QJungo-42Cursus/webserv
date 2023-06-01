@@ -9,7 +9,8 @@ servers:
         - /:
             methods: GET
             root: PWD/www/
-            index: index.html 
+            index: index.html
+            cgi: .bla PWD/cgi_tester
         - /post_body/:
             methods: POST
             root: PWD/www/
@@ -17,6 +18,7 @@ servers:
             methods: POST PUT
             root: PWD/www/
         - /directory/:
-            methods: GET
+            methods: GET POST
             root: PWD/www/YoupiBanane/
             index: youpi.bad_extension
+            cgi: .bla PWD/cgi_tester
