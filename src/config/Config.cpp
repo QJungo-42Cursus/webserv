@@ -335,7 +335,6 @@ static std::map<std::string, Route *> parse_routes(std::string &str)
 
 void Config::parse(std::string &server_config, Config &config)
 {
-//	Config *config = nw Config();
     {
         Option<std::string> line = find_key_value_line(server_config, "server_name", true);
         if (line.isSome())
@@ -363,7 +362,10 @@ void Config::parse(std::string &server_config, Config &config)
 Config::~Config()
 {
     for (std::map<std::string, Route *>::iterator it = routes.begin(); it != routes.end(); ++it)
-        delete it->second;
+    {
+        // TODO make it a stack thing
+//        delete it->second;
+    }
     routes.clear();
 }
 

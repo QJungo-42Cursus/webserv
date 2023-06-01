@@ -29,7 +29,6 @@ int main(int argc, char **argv)
 		std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
-    exit(EXIT_SUCCESS);
 
 	std::cout << "Starting webserv with " << configs.size() << " server(s) : " << std::endl;
 	for (std::vector<Config>::iterator it = configs.begin(); it != configs.end(); ++it)
@@ -54,15 +53,15 @@ int main(int argc, char **argv)
 	// Get one listening socket per "server"
 	for (int iServ = 0; iServ < nbServ; iServ++)
 	{
-		listenSockFds[iServ] = getListenSock(configs[iServ]);
-		configFromFd[listenSockFds[iServ]] = configs[iServ];
+		listenSockFds[iServ] = getListenSock(&(configs[iServ]));
+		configFromFd[listenSockFds[iServ]] = &(configs[iServ]);
 		FD_SET(listenSockFds[iServ], &fdSets.main); // adds the listening sock to the set
 		if (listenSockFds[iServ] > fdSets.fdMax)
 			fdSets.fdMax = listenSockFds[iServ];
-		std::string serverName = configs[iServ]->server_name.isSome() ? configs[iServ]->server_name.unwrap()
+		std::string serverName = configs[iServ].server_name.isSome() ? configs[iServ].server_name.unwrap()
 																	  : "not named";
 		std::cout << "Server " << serverName << ": ready, listening on port "
-				  << (configs[iServ]->port) << std::endl;
+				  << (configs[iServ].port) << std::endl;
 	}
 
     bool exit = false;
@@ -99,8 +98,6 @@ int main(int argc, char **argv)
 
     /// Free and exit
     std::cout << "Exiting webserv..." << std::endl;
-    for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
-        delete *it;
     for (int fd = 0; fd <= fdSets.fdMax; fd++)
         if (clientArray[fd])
             delete clientArray[fd];
