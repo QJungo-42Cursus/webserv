@@ -12,3 +12,7 @@ servers:
         - /add/:
             methods: PUT
             root: PWD/www/new/
+        - /api/:
+            methods: GET
+            root: PWD/www/apy/
+            cgi: .py /usr/bin/python3
