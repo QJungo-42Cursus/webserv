@@ -270,7 +270,7 @@ static bool isRequestComplete(Client *client)
 	client->clearRequest();
 
 	HttpRequest request(client->getHeader());
-	if (request.get_method() != Http::Methods::POST)
+	if (request.get_method() != Http::Methods::POST && request.get_method() != Http::Methods::PUT)
 		return (true); //we only accept body with POST method
 	//Note, if two requests are sent in same chunk, the second one would be ignored
 
@@ -325,6 +325,7 @@ static bool isHeaderComplete(Client *client)
 		client->getHeader() = header;
 		std::cout << "===PARSED FULL HEADER BELOW===\n" << client->getHeader()
 				  << "===" << std::endl;
+		getchar();
 		client->setFlagHeaderComplete(true);
 		if (requestStr.length() > header.length())
 			client->getBody() = requestStr.substr(pos + ending.length());
