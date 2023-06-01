@@ -14,39 +14,6 @@ static void prepareErrorResponse(Client *client, Config *config, std::string con
 
 static void handleNewConnection(int listenSockFd, t_fdSets *fdSets, Client *clientArray[], Config *config);
 
-void handleSockError(int fd, Config *configFromFd[], fd_set *mainFdSet,
-					 Client *clientArray[])
-{
-	if (configFromFd[fd]) // if fd is a listening socket
-	{
-		std::cout << "Server " << getServName(configFromFd[fd])
-				  << ": error on listening socket, will shutdown in 5s..."
-				  << std::endl;
-		// should free all clients ?
-		sleep(5);
-		exit(EXIT_FAILURE); // make it reboot instead?
-	}
-	std::cout << "Server " << getServName(configFromFd[clientArray[fd]->getListenFd()])
-			  << ": error on socket " << fd << ": closing connection." << std::endl;
-	close(fd); // needed?
-	FD_CLR(fd, mainFdSet); // no need to update nfdmax?
-	delete clientArray[fd];
-	clientArray[fd] = NULL;
-	return;
-}
-
-static std::string getServName(Config *config)
-{
-	std::stringstream ss;
-
-	if (config->server_name.isSome())
-		ss << config->server_name.unwrap();
-	else
-		ss << "unnamed";
-	ss << " (" << config->port << ")";
-	return ss.str();
-}
-
 bool readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[])
 {
 	if (configFromFd[fd]) // if fd corresponds to a listening socket
@@ -127,9 +94,12 @@ void writeSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clien
 
 	ssize_t nBytesSent = send(fd, (c->getResponse()).c_str(), (c->getResponse()).size(), 0);
 	if ((unsigned long) nBytesSent < (c->getResponse()).size())
+	{	
 		std::cout << "Server " << getServName(configFromFd[c->getListenFd()])
-				  << ": error while sending data to sock #" << fd << ", request ignored."
-				  << std::endl; // should add client info here
+				  << ": error while sending data to sock #" << fd
+				  << std::endl;
+		c->setFlagCloseAfterWrite(true);
+	}
 	else
 		std::cout << "=== Server " << getServName(configFromFd[c->getListenFd()]) << " sent response below to sock "
 				  << fd
@@ -197,7 +167,7 @@ int pollSockets(t_fdSets *fdSets, struct timeval *timeOut)
 	{
 		std::cout << "Error while polling with select, server will shutdown in 5s..." << std::endl;
 		sleep(5);
-		exit(EXIT_FAILURE); // (should free Clients first) should implement main proc to reboot...
+		exit(EXIT_FAILURE);
 	}
 	return (selectRetVal);
 }
@@ -271,7 +241,7 @@ static bool isRequestComplete(Client *client)
 
 	HttpRequest request(client->getHeader());
 	if (request.get_method() != Http::Methods::POST && request.get_method() != Http::Methods::PUT)
-		return (true); //we only accept body with POST method
+		return (true); //we only accept body with POST and PUT method
 	//Note, if two requests are sent in same chunk, the second one would be ignored
 
 	std::map<std::string, std::string> headerMap = request.get_headers();
@@ -356,3 +326,37 @@ static bool isChunkedBodyComplete(std::string const &body)
 	}
 	return (false);
 }
+
+void handleSockError(int fd, Config *configFromFd[], fd_set *mainFdSet,
+					 Client *clientArray[])
+{
+	if (configFromFd[fd]) // if fd is a listening socket
+	{
+		std::cout << "Server " << getServName(configFromFd[fd])
+				  << ": error on listening socket, will shutdown in 5s..."
+				  << std::endl;
+		sleep(5);
+		exit(EXIT_FAILURE); // make it reboot instead?
+	}
+	std::cout << "Server " << getServName(configFromFd[clientArray[fd]->getListenFd()])
+			  << ": error on socket " << fd << ": closing connection." << std::endl;
+	close(fd); // needed?
+	FD_CLR(fd, mainFdSet); // no need to update nfdmax?
+	delete clientArray[fd];
+	clientArray[fd] = NULL;
+	return;
+}
+
+static std::string getServName(Config *config)
+{
+	std::stringstream ss;
+
+	if (config->server_name.isSome())
+		ss << config->server_name.unwrap();
+	else
+		ss << "unnamed";
+	ss << " (" << config->port << ")";
+	return ss.str();
+}
+
+
