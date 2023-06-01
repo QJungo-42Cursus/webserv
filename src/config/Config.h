@@ -40,7 +40,7 @@ public:
     int port;
     Option<unsigned int> client_max_body_size;
     std::map<int, std::string> error_pages;
-    std::map<std::string, Route *> routes;
+    std::map<std::string, Route> routes;
 private:
     Config();
 };

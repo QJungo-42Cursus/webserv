@@ -93,7 +93,7 @@ Option<HttpResponse> RequestHandler::checkRequestValidity(const HttpRequest& req
 
 Route *RequestHandler::find_route(const std::string &requested_path) const
 {
-    Route *best_match = 0;
+    const Route *best_match = 0;
     std::string best_route;
     std::string modified_request_path = requested_path;
 
@@ -101,7 +101,7 @@ Route *RequestHandler::find_route(const std::string &requested_path) const
     if (!requested_path.empty() && *(requested_path.end() - 1) != '/')
         modified_request_path += '/';
 
-    std::map<std::string, Route *>::const_iterator it;
+    std::map<std::string, Route>::const_iterator it;
     for (it = config_->routes.begin(); it != config_->routes.end(); ++it)
     {
         std::string route_path = it->first;
@@ -112,11 +112,11 @@ Route *RequestHandler::find_route(const std::string &requested_path) const
 
         if (modified_request_path.find(route_path) == 0 && route_path.length() > best_route.length())
         {
-            best_match = it->second;
+            best_match = &(it->second);
             best_route = it->first;
         }
     }
-    return best_match;
+    return (Route *) best_match; // TODO ciao
 }
 
 bool RequestHandler::is_method_allowed(const Route *route, const HttpRequest &request)

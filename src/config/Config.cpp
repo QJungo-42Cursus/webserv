@@ -258,12 +258,11 @@ static std::map<int, std::string> parse_error_pages(std::string &str)
     return map;
 }
 
-static std::map<std::string, Route *> parse_routes(std::string &str)
+static void parse_routes(std::string &str, std::map<std::string, Route> &map)
 {
-    std::map<std::string, Route *> map;
     Option<std::string> m_lines = get_list_content(str, "routes");
     if (m_lines.isNone())
-        return map;
+        return;
     std::string lines = m_lines.unwrap();
     std::istringstream iss(lines);
     bool is_in_new_route;
@@ -281,8 +280,8 @@ static std::map<std::string, Route *> parse_routes(std::string &str)
             // Va parser les infos de la route (de la derniere iteration)
             if (!map.count(route_path))
             {
-                Route *route = Route::parse(route_infos, route_path);
-                map[route_path] = route;
+                map.insert(std::pair<std::string, Route>(route_path, Route(route_infos, route_path)));
+//                map[route_path] = Route(route_infos, route_path);
                 route_infos.clear();
             }
         }
@@ -304,32 +303,30 @@ static std::map<std::string, Route *> parse_routes(std::string &str)
     }
     if (!map.count(route_path))
     {
-        Route *route = Route::parse(route_infos, route_path);
-        map[route_path] = route;
+        map.insert(std::pair<std::string, Route>(route_path, Route(route_infos, route_path)));
+//        map[route_path] = Route(route_infos, route_path);
     }
 
-    for (std::map<std::string, Route *>::iterator it = map.begin(); it != map.end(); ++it)
+    for (std::map<std::string, Route>::iterator it = map.begin(); it != map.end(); ++it)
     {
-        replacePWD(it->second->root);
-        if (it->second->index.isSome())
-            replacePWD(it->second->index.unwrap());
-        if (it->second->cgi.isSome())
-            replacePWD(it->second->cgi.unwrap().cgi_path);
+        replacePWD(it->second.root);
+        if (it->second.index.isSome())
+            replacePWD(it->second.index.unwrap());
+        if (it->second.cgi.isSome())
+            replacePWD(it->second.cgi.unwrap().cgi_path);
     }
 
-    for (std::map<std::string, Route *>::iterator it = map.begin(); it != map.end(); ++it)
+    for (std::map<std::string, Route>::iterator it = map.begin(); it != map.end(); ++it)
     {
-        if (it->second->repertory_listing && it->second->cgi.isSome())
+        if (it->second.repertory_listing && it->second.cgi.isSome())
             throw std::runtime_error("Invalid config file, a route cannot have both repertory_listing and cgi");
-        if (it->second->repertory_listing && it->second->index.isSome())
+        if (it->second.repertory_listing && it->second.index.isSome())
             throw std::runtime_error("Invalid config file, a route cannot have both repertory_listing and index");
         char last_char = *(it->first.end() - 1);
         if (last_char != '/')
             throw std::runtime_error(
                     "Invalid config file, a route with repertory_listing must end with '/' (" + it->first + ")");
     }
-
-    return map;
 }
 
 
@@ -354,14 +351,14 @@ void Config::parse(std::string &server_config, Config &config)
             throw std::runtime_error("Invalid config file, methods are not allowed at server level");
     }
     config.error_pages = parse_error_pages(server_config);
-    config.routes = parse_routes(server_config);
+    parse_routes(server_config, config.routes);
     if (config.routes.empty())
         throw std::runtime_error("Invalid config file, no route found");
 }
 
 Config::~Config()
 {
-    for (std::map<std::string, Route *>::iterator it = routes.begin(); it != routes.end(); ++it)
+    for (std::map<std::string, Route>::iterator it = routes.begin(); it != routes.end(); ++it)
     {
         // TODO make it a stack thing
 //        delete it->second;
@@ -379,10 +376,10 @@ void Config::log() const
     for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it)
         std::cout << it->first << " " << it->second << std::endl;
     std::cout << "routes: " << std::endl;
-    for (std::map<std::string, Route *>::const_iterator it = routes.begin(); it != routes.end(); ++it)
+    for (std::map<std::string, Route>::const_iterator it = routes.begin(); it != routes.end(); ++it)
     {
         std::cout << it->first << std::endl;
-        it->second->log();
+        it->second.log();
     }
 }
 
