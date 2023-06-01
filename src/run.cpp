@@ -87,6 +87,13 @@ bool readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *client
 	{
 		exit = processRequest(client, config);
 	}
+	catch (HttpResponse &rep)
+	{
+		// TODO est-ce que ca marche ?
+		client->setFlagResponse(true);
+		client->setResponse(rep.to_string());
+		client->setFlagCloseAfterWrite(true);
+	}
 	catch (std::exception const &e)
 	{
 		std::string errStr(e.what());
@@ -275,20 +282,24 @@ static bool isRequestComplete(Client *client)
 		unsigned int bodySize = atoi(headerMap["Content-Length"].c_str());
 
 		if (bodySize > client->getMaxBodySize())
-            // TODO https://blog.hubspot.com/website/413-request-entity-too-large error 413 !
-//			throw std::runtime_error("Error: bodysize specified in header is over maximum allowed.");
-		if (client->getBody().length() >
-			client->getMaxBodySize()) // this would only happen if sent body is over the size specified in header
-			throw std::runtime_error("Error: bodysize is over maximum allowed.");
+		{
+			throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
+		}
+		if (client->getBody().length() > client->getMaxBodySize())
+		{
+			throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
+		}	
 		if (client->getBody().length() < bodySize)
+		{
 			return (false);
+		}
 		return (true);
 	}
 	else if (headerMap.count("Transfer-Encoding")
 			 && headerMap["Transfer-Encoding"].compare("chunked"))
 	{
 		if (client->getBody().length() > client->getMaxBodySize())
-			throw std::runtime_error("Error: bodysize is over maximum allowed.");
+			throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
 		if (isChunkedBodyComplete(client->getBody()))
 			return (true);
 		return (false);
@@ -305,14 +316,13 @@ static bool isHeaderComplete(Client *client)
 	std::string requestStr = client->getRequest();
 	std::string header;
 	std::string const ending("\r\n\r\n");
-	std::string::size_type pos;
 
-	pos = requestStr.find(ending, 0);
+	std::string::size_type pos = requestStr.find(ending, 0);
 	if (pos != std::string::npos)
 	{
 		header = requestStr.substr(0, pos + ending.length());
 		if (header.size() > MAX_HEADER_SIZE)
-			throw std::runtime_error("Error: header size over the max allowed size.");
+			throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
 		client->getHeader() = header;
 		std::cout << "===PARSED FULL HEADER BELOW===\n" << client->getHeader()
 				  << "===" << std::endl;
@@ -323,7 +333,7 @@ static bool isHeaderComplete(Client *client)
 		return (true);
 	}
 	else if (requestStr.size() > MAX_HEADER_SIZE)
-		throw std::runtime_error("Error: header size over the max allowed size.");
+		throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
 	return (false);
 }
 

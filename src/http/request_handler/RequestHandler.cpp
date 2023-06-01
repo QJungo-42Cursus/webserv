@@ -174,3 +174,54 @@ HttpResponse RequestHandler::handle_error(int error_code, const std::string &err
 
 	return response;
 }
+
+
+
+
+
+static std::string create_error_html_static(int error_code, const std::string &error_phrase)
+{
+	std::stringstream html;
+	html << "<!DOCTYPE html>"
+		 << "<html>"
+		 << "<head><title>Error Page</title></head>"
+		 << "<body>"
+		 << "<h1 style=\"text-align:center;\">" << error_code << " " << error_phrase << "</h1>"
+		 << "<p style=\"text-align:center;\">42_webserv</p>"
+		 << "</body>"
+		 << "</html>";
+	return html.str();
+}
+
+HttpResponse RequestHandler::handle_error_static(int error_code, const std::string &error_phrase, const Config *config_)
+{
+	HttpResponse response;
+    (void)config_;
+
+    // TODO : error page
+
+	// std::map<int, std::string>::const_iterator it = config_->error_pages.find(error_code);
+	// if (it != config_->error_pages.end())
+	// {
+	// 	// If an error page is found, use it as the body
+	// 	std::string file_path = it->second;
+	// 	std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
+	// 	if (file.is_open())
+	// 	{
+	// 		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	// 		response.set_body(content);
+	// 	}
+	// 	else
+	// 	{
+	// 		response.set_body(create_error_html_static(error_code, error_phrase));
+	// 	}
+	// }
+	// else
+	// {
+	// 	// If no error page is found, create a default error page
+		response.set_body(create_error_html_static(error_code, error_phrase));
+	// }
+	response.set_status(error_code, error_phrase);
+	response.add_header("Content-Type", "text/html");
+	return response;
+}
