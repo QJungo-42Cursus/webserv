@@ -1,4 +1,4 @@
-# un server python qui ecoute un port et qui renvoie la requete brut dan un autre serveur
+# un server python qui ecoute un port et qui renvoie la requete brut dans un autre serveur
 
 # Python 3 server example
 from http.server import BaseHTTPRequestHandler, HTTPServer

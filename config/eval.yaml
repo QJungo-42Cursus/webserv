@@ -8,9 +8,8 @@ servers:
       routes:
         - /:
             methods: GET
-            root: PWD/www/ # pour l'instant ca crash si on le met pas
-            index: index.html # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
-            #index: youpi.bla # pour l'instant ca crash s'il n'y a pas d'index ou de repertory_listing
+            root: PWD/www/
+            index: index.html 
         - /post_body/:
             methods: POST
             root: PWD/www/

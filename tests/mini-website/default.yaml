@@ -8,4 +8,4 @@ servers:
             methods: GET POST DELETE
             root: PWD/www/
             index: index.html
-            cgi: .php /bin/php
+            cgi: .php /usr/bin/php
