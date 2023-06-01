@@ -48,7 +48,13 @@ static std::map<std::string, std::string> get_env(const HttpRequest &request, co
 		env["REQUEST_METHOD"] = "DELETE";
 	else if (method == Http::Methods::PUT)
 		env["REQUEST_METHOD"] = "PUT";
+
+	env["FILEPATH_INFO"] = request.get_path();
+
 	env["PATH_INFO"] = request.get_path();
+	env["PATH_INFO"] = "\\";
+	std::cout << std::endl << "======================= PATH_INFO: " << env["PATH_INFO"] << std::endl << " =====================" << std::endl << std::endl;
+
 	env["SCRIPT_NAME"] = real_path(route, request);
 	env["REMOTE_HOST"] = "";
 	if (headers.count("Host"))
@@ -104,9 +110,6 @@ CgiExecutor::execute(const HttpRequest &request, const Config &config, const Cgi
 			new char[request_path.size() + 1],
 			NULL
 	};
-
-
-
 
 	strcpy(argv[0], cgi_config.cgi_path.c_str());
 	argv[0][cgi_config.cgi_path.size()] = '\0';
@@ -174,7 +177,7 @@ CgiExecutor::execute(const HttpRequest &request, const Config &config, const Cgi
 		usleep(10000);
 	}
 	if (did_timeout)
-		throw std::runtime_error("CGI timeout");
+		throw RequestHandler::handle_error_static(504, "CGI timeout", &config);
 	if (exit_status != 0)
 		throw std::runtime_error("CGI exit with status not 0");
 

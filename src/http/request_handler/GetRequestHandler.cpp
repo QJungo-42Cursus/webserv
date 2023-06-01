@@ -53,6 +53,10 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 			{
 				cgi_response = CgiExecutor::execute(request, *config_, cgi, *route);
 			}
+			catch (HttpResponse &response)
+            {
+                return response;
+            }
 			catch (const std::exception &e)
 			{
 				std::cout << "CgiExecutor::execute: " << e.what() << std::endl;

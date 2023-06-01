@@ -35,6 +35,10 @@ HttpResponse DeleteRequestHandler::handle_request(const HttpRequest &request)
                 std::string cgi_str_response = CgiExecutor::execute(request, *config_, cgi, *route);
                 return parseCGIResponse(cgi_str_response);
             }
+            catch (HttpResponse &response)
+            {
+                return response;
+            }
             catch (std::exception &e)
             {
                 return handle_error_static(500, "Internal Server Error (CGI)", config_);

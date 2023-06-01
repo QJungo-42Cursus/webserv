@@ -2,10 +2,13 @@ servers:
   - server:
       server_name: domain1.com
       port: 8080
-      client_max_body_size: 2k
+      client_max_body_size: 10m
       routes:
         - /:
             methods: GET POST DELETE
             root: PWD/www/
             index: index.html
             cgi: .php /usr/bin/php
+        - /add/:
+            methods: PUT
+            root: PWD/www/new/

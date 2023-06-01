@@ -1,7 +1,3 @@
-//
-// Created by qjungo on 5/30/23.
-//
-
 #include "PutRequestHandler.h"
 
 HttpResponse PutRequestHandler::handle_request(const HttpRequest &request)
