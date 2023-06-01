@@ -18,7 +18,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 	bool is_file = is_path_file(requested_path);
 	bool is_directory = is_path_dir(requested_path);
 	if (!is_file && !is_directory)
-		return handle_error(404, "Not Found (file/dir)");
+		return handle_error_static(404, "Not Found (file/dir)", config_);
 
 
 	HttpResponse response;
@@ -38,7 +38,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 		}
 		else
 		{
-			return handle_error(403, "Forbidden");
+			return handle_error_static(403, "Forbidden", config_);
 		}
 	}
 	if (is_path_file(requested_path) && route->cgi.isSome())
@@ -56,7 +56,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 			catch (const std::exception &e)
 			{
 				std::cout << "CgiExecutor::execute: " << e.what() << std::endl;
-				return handle_error(500, "Internal Server Error (CGI)");
+				return handle_error_static(500, "Internal Server Error (CGI)", config_);
 			}
 			return parseCGIResponse(cgi_response);;
 		}
@@ -66,7 +66,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 
 	if (!file)
 	{
-		return handle_error(404, "Not Found");
+		return handle_error_static(404, "Not Found", config_);
 	}
 	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	response.set_body(content);

@@ -89,7 +89,6 @@ bool readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *client
 	}
 	catch (HttpResponse &rep)
 	{
-		// TODO est-ce que ca marche ?
 		client->setFlagResponse(true);
 		client->setResponse(rep.to_string());
 		client->setFlagCloseAfterWrite(true);
@@ -109,7 +108,7 @@ static void prepareErrorResponse(Client *client, Config *config, std::string con
 	HttpResponse response;
 
 	GetRequestHandler rh(config);
-	response = rh.handle_error(404, errStr); // could use specific codes for oversize requests
+	response = RequestHandler::handle_error_static(404, errStr, rh.getConfig());// could use specific codes for oversize requests
 	client->setFlagResponse(true);
 	client->setResponse(response.to_string());
 	client->setFlagCloseAfterWrite(true);
@@ -247,7 +246,7 @@ static bool processRequest(Client *client, Config *config)
 	else
 	{
 		GetRequestHandler rh(config); //nb could create a specific child error class
-		response = rh.handle_error(405, "Method not allowed.");
+		response = RequestHandler::handle_error_static(405, "Method not allowed.", rh.getConfig());
 		client->setFlagCloseAfterWrite(true);
 	}
 
@@ -283,11 +282,11 @@ static bool isRequestComplete(Client *client)
 
 		if (bodySize > client->getMaxBodySize())
 		{
-			throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
+			throw RequestHandler::handle_error_static(413, "Payload Too Large (size in specified in header too big)", NULL);
 		}
 		if (client->getBody().length() > client->getMaxBodySize())
 		{
-			throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
+			throw RequestHandler::handle_error_static(413, "Payload Too Large (body too big)", NULL);
 		}	
 		if (client->getBody().length() < bodySize)
 		{
@@ -299,7 +298,7 @@ static bool isRequestComplete(Client *client)
 			 && headerMap["Transfer-Encoding"].compare("chunked"))
 	{
 		if (client->getBody().length() > client->getMaxBodySize())
-			throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
+			throw RequestHandler::handle_error_static(413, "Payload Too Large (chunked moooode)", NULL);
 		if (isChunkedBodyComplete(client->getBody()))
 			return (true);
 		return (false);
@@ -317,12 +316,12 @@ static bool isHeaderComplete(Client *client)
 	std::string header;
 	std::string const ending("\r\n\r\n");
 
-	std::string::size_type pos = requestStr.find(ending, 0);
+	std::string::size_type pos = requestStr.find(ending);
 	if (pos != std::string::npos)
 	{
 		header = requestStr.substr(0, pos + ending.length());
 		if (header.size() > MAX_HEADER_SIZE)
-			throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
+			throw RequestHandler::handle_error_static(413, "Payload Too Large (max header size exceded)", NULL);
 		client->getHeader() = header;
 		std::cout << "===PARSED FULL HEADER BELOW===\n" << client->getHeader()
 				  << "===" << std::endl;
@@ -333,7 +332,12 @@ static bool isHeaderComplete(Client *client)
 		return (true);
 	}
 	else if (requestStr.size() > MAX_HEADER_SIZE)
-		throw RequestHandler::handle_error_static(413, "Payload Too Large", NULL);
+	{
+		std::cout << "===PARSED FULL R. BELOW===\n" << client->getRequest().substr(0, MAX_HEADER_SIZE)
+				  << "===" << std::endl;
+		throw RequestHandler::handle_error_static(413, "Payload Too Large  (max header size exceded, with chunked header)", NULL);
+	} 	
+		
 	return (false);
 }
 

@@ -19,8 +19,10 @@ public:
     virtual                 ~RequestHandler() {}
     virtual                 HttpResponse handle_request(const HttpRequest& request) = 0;
     RequestHandler(const Config *config);
-    HttpResponse            handle_error(int error_code, const std::string& error_phrase);
+    // HttpResponse            handle_error(int error_code, const std::string& error_phrase);
     static                  HttpResponse handle_error_static(int error_code, const std::string &error_phrase, const Config *config_);
+
+    const Config*           getConfig() const;
 
 
 protected:

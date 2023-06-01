@@ -28,17 +28,17 @@ HttpResponse PutRequestHandler::handle_request(const HttpRequest &request)
             requested_path += route->index.unwrap();
         }    
         else {
-            return handle_error(403, "Forbidden");
+            return handle_error_static(403, "Forbidden", config_);
         }
     }
 
 	std::string parent_dir = requested_path.substr(0, requested_path.find_last_of('/'));
     if (!is_path_dir(parent_dir)) {
-        return handle_error(409, "Conflict");
+        return handle_error_static(409, "Conflict", config_);
     }
     std::ofstream file(requested_path.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 	if (!file.is_open())
-		return handle_error(500, "Internal Server Error");
+		return handle_error_static(500, "Internal Server Error", config_);
 	file.write(request.get_body().c_str(), request.get_body().size());
 	file.close();
 

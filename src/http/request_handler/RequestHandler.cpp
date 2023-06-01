@@ -33,11 +33,11 @@ Route * RequestHandler::getRouteOrThrowResponse(const HttpRequest &request)
         throw res.unwrap();
     Route *route = find_route(request.get_path());
     if (route == NULL)
-        throw handle_error(404, "Not Found (route)");
+        throw handle_error_static(404, "Not Found (route)", config_);
     if (!is_method_allowed(route, request))
-        throw handle_error(405, "Method Not Allowed");
+        throw handle_error_static(405, "Method Not Allowed", config_);
     if (check_path(request.get_path()))
-        throw handle_error(403, "Forbidden");
+        throw handle_error_static(403, "Forbidden", config_);
     if (route->redirection.isSome())
         throw handle_redirection(route);
     return route;
@@ -51,17 +51,17 @@ Option<HttpResponse> RequestHandler::checkRequestValidity(const HttpRequest& req
 
         // Parse the request line
         if (!(request_stream >> method >> uri >> http_version)) {
-            return Option<HttpResponse>::Some(handle_error(400, "Bad Request"));
+            return Option<HttpResponse>::Some(handle_error_static(400, "Bad Request", config_));
         }
 
         // Check if the method is valid
         if (method != "GET" && method != "POST" && method != "DELETE" && method != "PUT") {
-            return Option<HttpResponse>::Some(handle_error(501, "Not Implemented"));
+            return Option<HttpResponse>::Some(handle_error_static(501, "Not Implemented", config_));
         }
 
         // Check if the HTTP version is valid
         if (http_version != "HTTP/1.1") {
-            return Option<HttpResponse>::Some(handle_error(505, "HTTP Version Not Supported"));
+            return Option<HttpResponse>::Some(handle_error_static(505, "HTTP Version Not Supported", config_));
         }
 
         // Check headers
@@ -70,7 +70,7 @@ Option<HttpResponse> RequestHandler::checkRequestValidity(const HttpRequest& req
             size_t colon_pos = header_line.find(":");
             if (colon_pos == std::string::npos) {
                 // Each header must contain a colon
-                return Option<HttpResponse>::Some(handle_error(400, "Bad Request"));
+                return Option<HttpResponse>::Some(handle_error_static(400, "Bad Request", config_));
             }
 
             std::string header_name = header_line.substr(0, colon_pos);
@@ -83,7 +83,7 @@ Option<HttpResponse> RequestHandler::checkRequestValidity(const HttpRequest& req
 
             if (header_name.empty() || header_value.empty()) {
                 // Both header name and value must be non-empty
-                 return Option<HttpResponse>::Some(handle_error(400, "Bad Request"));
+                 return Option<HttpResponse>::Some(handle_error_static(400, "Bad Request", config_));
             }
         }
 
@@ -130,54 +130,10 @@ bool RequestHandler::is_method_allowed(const Route *route, const HttpRequest &re
 	return (allowed_methods & request.get_method()) != 0;
 }
 
-std::string RequestHandler::create_error_html(int error_code, const std::string &error_phrase) const
+const  Config * RequestHandler::getConfig() const
 {
-	std::stringstream html;
-	html << "<!DOCTYPE html>"
-		 << "<html>"
-		 << "<head><title>Error Page</title></head>"
-		 << "<body>"
-		 << "<h1 style=\"text-align:center;\">" << error_code << " " << error_phrase << "</h1>"
-		 << "<p style=\"text-align:center;\">42_webserv</p>"
-		 << "</body>"
-		 << "</html>";
-	return html.str();
+    return config_;
 }
-
-HttpResponse RequestHandler::handle_error(int error_code, const std::string &error_phrase)
-{
-	HttpResponse response;
-
-	std::map<int, std::string>::const_iterator it = config_->error_pages.find(error_code);
-	if (it != config_->error_pages.end())
-	{
-		// If an error page is found, use it as the body
-		std::string file_path = it->second;
-		std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
-		if (file.is_open())
-		{
-			std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-			response.set_body(content);
-		}
-		else
-		{
-			response.set_body(create_error_html(error_code, error_phrase));
-		}
-	}
-	else
-	{
-		// If no error page is found, create a default error page
-		response.set_body(create_error_html(error_code, error_phrase));
-	}
-	response.set_status(error_code, error_phrase);
-	response.add_header("Content-Type", "text/html");
-
-	return response;
-}
-
-
-
-
 
 static std::string create_error_html_static(int error_code, const std::string &error_phrase)
 {
@@ -193,35 +149,39 @@ static std::string create_error_html_static(int error_code, const std::string &e
 	return html.str();
 }
 
-HttpResponse RequestHandler::handle_error_static(int error_code, const std::string &error_phrase, const Config *config_)
+HttpResponse RequestHandler::handle_error_static(int error_code, const std::string &error_phrase, const Config *config)
 {
-	HttpResponse response;
-    (void)config_;
-
-    // TODO : error page
-
-	// std::map<int, std::string>::const_iterator it = config_->error_pages.find(error_code);
-	// if (it != config_->error_pages.end())
-	// {
-	// 	// If an error page is found, use it as the body
-	// 	std::string file_path = it->second;
-	// 	std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
-	// 	if (file.is_open())
-	// 	{
-	// 		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-	// 		response.set_body(content);
-	// 	}
-	// 	else
-	// 	{
-	// 		response.set_body(create_error_html_static(error_code, error_phrase));
-	// 	}
-	// }
-	// else
-	// {
-	// 	// If no error page is found, create a default error page
-		response.set_body(create_error_html_static(error_code, error_phrase));
-	// }
-	response.set_status(error_code, error_phrase);
+	HttpResponse response;	
+    
+    response.set_status(error_code, error_phrase);
 	response.add_header("Content-Type", "text/html");
+    if (config == NULL)
+    {
+        // TODO : check default error page
+        response.set_body(create_error_html_static(error_code, error_phrase));
+        return response;
+    }
+
+	std::map<int, std::string>::const_iterator it = config->error_pages.find(error_code);
+	if (it != config->error_pages.end())
+	{
+		// If an error page is found, use it as the body
+		std::string file_path = it->second;
+		std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
+		if (file.is_open())
+		{
+			std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+			response.set_body(content);
+		}
+		else
+		{
+			response.set_body(create_error_html_static(error_code, error_phrase));
+		}
+	}
+	else
+	{
+		// If no error page is found, create a default error page
+		response.set_body(create_error_html_static(error_code, error_phrase));
+	}
 	return response;
 }

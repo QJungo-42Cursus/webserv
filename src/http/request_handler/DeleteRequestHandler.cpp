@@ -19,12 +19,12 @@ HttpResponse DeleteRequestHandler::handle_request(const HttpRequest &request)
     bool is_file = is_path_file(requested_path);
     bool is_directory = is_path_dir(requested_path);
     if (!is_file && !is_directory)
-        return handle_error(404, "Not Found (file/dir)");
+        return handle_error_static(404, "Not Found (file/dir)", config_);
 
     HttpResponse response;
 
     if (is_directory)
-        return handle_error(403, "Forbidden (cannot delete directory)");
+        return handle_error_static(403, "Forbidden (cannot delete directory)", config_);
     if (route->cgi.isSome())
     {
         const CgiConfig &cgi = route->cgi.unwrap();
@@ -37,7 +37,7 @@ HttpResponse DeleteRequestHandler::handle_request(const HttpRequest &request)
             }
             catch (std::exception &e)
             {
-                return handle_error(500, "Internal Server Error (CGI)");
+                return handle_error_static(500, "Internal Server Error (CGI)", config_);
             }
         }
     }
