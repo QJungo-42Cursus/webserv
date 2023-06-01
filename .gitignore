@@ -1,7 +1,4 @@
 **/*.o
 webserv
 **/*.dSYM
-.vscode
 .DS_Store
-example/client
-example/server
