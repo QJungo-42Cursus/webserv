@@ -275,7 +275,8 @@ static bool isRequestComplete(Client *client)
 		unsigned int bodySize = atoi(headerMap["Content-Length"].c_str());
 
 		if (bodySize > client->getMaxBodySize())
-			throw std::runtime_error("Error: bodysize specified in header is over maximum allowed.");
+            // TODO https://blog.hubspot.com/website/413-request-entity-too-large error 413 !
+//			throw std::runtime_error("Error: bodysize specified in header is over maximum allowed.");
 		if (client->getBody().length() >
 			client->getMaxBodySize()) // this would only happen if sent body is over the size specified in header
 			throw std::runtime_error("Error: bodysize is over maximum allowed.");

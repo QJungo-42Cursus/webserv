@@ -15,7 +15,7 @@ servers:
             methods: POST
             root: PWD/www/
         - /put_test/:
-            methods: POST
+            methods: POST PUT
             root: PWD/www/
         - /directory/:
             methods: GET
