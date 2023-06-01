@@ -22,27 +22,27 @@ class Route;
 class Config
 {
 public:
-	static std::vector<Config *> parse_servers(const std::string &path);
+    static void parse_servers(const std::string &path, std::vector<Config> &configs);
 
-	static Config *parse(std::string &server_config);
+    static void parse(std::string &server_config, Config &config);
 
-	void log() const;
+    void log() const;
 
-	struct Default
-	{
-		static const int PORT;
-		static const unsigned int CLIENT_MAX_BODY_SIZE;
-	};
+    struct Default
+    {
+        static const int PORT;
+        static const unsigned int CLIENT_MAX_BODY_SIZE;
+    };
 
-	~Config();
+    ~Config();
 
-	Option<std::string> server_name;
-	int port;
-	Option<unsigned int> client_max_body_size;
-	std::map<int, std::string> error_pages;
-	std::map<std::string, Route *> routes;
+    Option<std::string> server_name;
+    int port;
+    Option<unsigned int> client_max_body_size;
+    std::map<int, std::string> error_pages;
+    std::map<std::string, Route *> routes;
 private:
-	Config();
+    Config();
 };
 
 #endif

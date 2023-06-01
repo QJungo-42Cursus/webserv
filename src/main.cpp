@@ -16,31 +16,26 @@ int main(int argc, char **argv)
 		std::cerr << "Usage: " << argv[0] << " [path/to/file.conf]" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	std::vector<Config *> configs;
+	std::vector<Config> configs;
 	try
 	{
 		if (argc == 1)
-		{
-			std::cout << "No config file specified, using default config file: " << DEFAULT_CONFIG_FILE_PATH
-					  << std::endl;
-			configs = Config::parse_servers(DEFAULT_CONFIG_FILE_PATH);
-		}
+			Config::parse_servers(DEFAULT_CONFIG_FILE_PATH, configs);
 		else
-		{
-			configs = Config::parse_servers(argv[1]);
-		}
+			Config::parse_servers(argv[1], configs);
 	}
 	catch (std::exception &e)
 	{
 		std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+    exit(EXIT_SUCCESS);
 
 	std::cout << "Starting webserv with " << configs.size() << " server(s) : " << std::endl;
-	for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
+	for (std::vector<Config>::iterator it = configs.begin(); it != configs.end(); ++it)
 	{
 		std::cout << "====================" << std::endl;
-		(*it)->log();
+		(*it).log();
 		std::cout << std::endl;
 	}
 
@@ -56,58 +51,58 @@ int main(int argc, char **argv)
 	FD_ZERO(&fdSets.main); // make sure it's empty
 	fdSets.fdMax = 0;
 
-	// Get one listening socket per "server"
-	for (int iServ = 0; iServ < nbServ; iServ++)
-	{
-		listenSockFds[iServ] = getListenSock(configs[iServ]);
-		configFromFd[listenSockFds[iServ]] = configs[iServ];
-		FD_SET(listenSockFds[iServ], &fdSets.main); // adds the listening sock to the set
-		if (listenSockFds[iServ] > fdSets.fdMax)
-			fdSets.fdMax = listenSockFds[iServ];
-		std::string serverName = configs[iServ]->server_name.isSome() ? configs[iServ]->server_name.unwrap()
-																	  : "not named";
-		std::cout << "Server " << serverName << ": ready, listening on port "
-				  << (configs[iServ]->port) << std::endl;
-	}
-
-    bool exit = false;
-
-	// Main loop
-	while (true)
-	{
-		// Poll sockets with select
-		if (pollSockets(&fdSets, NULL) == 0)
-		{
-			std::cout << "Timeout while polling sockets with select..." << std::endl;
-			continue;
-		}
-
-		// Check sockets for errors or read/write readyness
-		for (int fd = 0; fd <= fdSets.fdMax; fd++)
-		{
-			if (FD_ISSET(fd, &fdSets.error))
-				handleSockError(fd, configFromFd, &fdSets.main, clientArray);
-			else if (FD_ISSET(fd, &fdSets.read) && (configFromFd[fd] || !clientArray[fd]->getFlagResponse()))
-				exit = readSocket(fd, configFromFd, &fdSets, clientArray);
-			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
-			{
-				if (clientArray[fd] && !clientArray[fd]->getFlagResponse())
-					continue;
-				writeSocket(fd, configFromFd, &fdSets, clientArray);
-			}
-            if (exit)
-                break;
-		}
-        if (exit)
-            break;
-	}
-
-    /// Free and exit
-    std::cout << "Exiting webserv..." << std::endl;
-    for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
-        delete *it;
-    for (int fd = 0; fd <= fdSets.fdMax; fd++)
-        if (clientArray[fd])
-            delete clientArray[fd];
-	return (0);
+//	// Get one listening socket per "server"
+//	for (int iServ = 0; iServ < nbServ; iServ++)
+//	{
+//		listenSockFds[iServ] = getListenSock(configs[iServ]);
+//		configFromFd[listenSockFds[iServ]] = configs[iServ];
+//		FD_SET(listenSockFds[iServ], &fdSets.main); // adds the listening sock to the set
+//		if (listenSockFds[iServ] > fdSets.fdMax)
+//			fdSets.fdMax = listenSockFds[iServ];
+//		std::string serverName = configs[iServ]->server_name.isSome() ? configs[iServ]->server_name.unwrap()
+//																	  : "not named";
+//		std::cout << "Server " << serverName << ": ready, listening on port "
+//				  << (configs[iServ]->port) << std::endl;
+//	}
+//
+//    bool exit = false;
+//
+//	// Main loop
+//	while (true)
+//	{
+//		// Poll sockets with select
+//		if (pollSockets(&fdSets, NULL) == 0)
+//		{
+//			std::cout << "Timeout while polling sockets with select..." << std::endl;
+//			continue;
+//		}
+//
+//		// Check sockets for errors or read/write readyness
+//		for (int fd = 0; fd <= fdSets.fdMax; fd++)
+//		{
+//			if (FD_ISSET(fd, &fdSets.error))
+//				handleSockError(fd, configFromFd, &fdSets.main, clientArray);
+//			else if (FD_ISSET(fd, &fdSets.read) && (configFromFd[fd] || !clientArray[fd]->getFlagResponse()))
+//				exit = readSocket(fd, configFromFd, &fdSets, clientArray);
+//			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
+//			{
+//				if (clientArray[fd] && !clientArray[fd]->getFlagResponse())
+//					continue;
+//				writeSocket(fd, configFromFd, &fdSets, clientArray);
+//			}
+//            if (exit)
+//                break;
+//		}
+//        if (exit)
+//            break;
+//	}
+//
+//    /// Free and exit
+//    std::cout << "Exiting webserv..." << std::endl;
+//    for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
+//        delete *it;
+//    for (int fd = 0; fd <= fdSets.fdMax; fd++)
+//        if (clientArray[fd])
+//            delete clientArray[fd];
+//	return (0);
 }

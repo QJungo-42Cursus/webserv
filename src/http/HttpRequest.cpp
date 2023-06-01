@@ -2,6 +2,7 @@
 #include "HttpRequest.h"
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
 #include "Methods.h"
 #include "HttpResponse.h"
 
@@ -33,26 +34,6 @@ std::string HttpRequest::get_body() const {
     return body_;
 }
 
-/*
-void HttpRequest::parse_request(const std::string& raw_request) {
-    std::istringstream request_stream(raw_request);
-    std::string line;
-
-    // Parse the request line
-    std::getline(request_stream, line);
-    parse_request_line(line);
-
-    // Parse headers
-    while (std::getline(request_stream, line) && line != "\r") {
-        parse_header(line);
-    }
-
-    // Parse body (if any)
-    if (method_ == Http::Methods::POST || method_ == Http::Methods::PUT) {
-        std::getline(request_stream, body_);
-    }
-}*/
-
 void HttpRequest::parse_request(const std::string& raw_request) {
     std::istringstream request_stream(raw_request);
     std::string line;
@@ -68,7 +49,7 @@ void HttpRequest::parse_request(const std::string& raw_request) {
 
     // Parse body (if any)
     if ((method_ == Http::Methods::POST || method_ == Http::Methods::PUT) && headers_.count("Content-Length")) {
-        std::streamsize body_length = std::stol(headers_["Content-Length"]);
+        int body_length = atoi(headers_["Content-Length"].c_str());
 
         // Get body of specified length
         char* body_chars = new char[body_length + 1]();
