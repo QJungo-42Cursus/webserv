@@ -40,14 +40,14 @@
 
 # include "server/Client.hpp" // should the class headers be included in the main header ? or the other way around ?
 
-# include "server/HttpResponse.h"
-# include "server/HttpRequest.h"
-# include "server/request_handler/RequestHandler.h"
-# include "server/request_handler/DeleteRequestHandler.h"
-# include "server/request_handler/PutRequestHandler.h"
-# include "server/request_handler/PostRequestHandler.h"
-# include "server/request_handler/GetRequestHandler.h"
-# include "http/http.h"
+# include "http/HttpResponse.h"
+# include "http/HttpRequest.h"
+# include "http/request_handler/RequestHandler.h"
+# include "http/request_handler/DeleteRequestHandler.h"
+# include "http/request_handler/PutRequestHandler.h"
+# include "http/request_handler/PostRequestHandler.h"
+# include "http/request_handler/GetRequestHandler.h"
+# include "http/Methods.h"
 
 /* Functions ***************************************************/
 

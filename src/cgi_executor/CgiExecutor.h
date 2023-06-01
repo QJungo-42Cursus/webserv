@@ -2,8 +2,8 @@
 #define CGIEXECUTOR_H
 
 #include <string>
-#include "../server/HttpRequest.h"
-#include "../server/HttpResponse.h"
+#include "../http/HttpRequest.h"
+#include "../http/HttpResponse.h"
 #include "../config/Config.h"
 
 class CgiExecutor

@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <ctime>
 #include <sstream>
-#include "../server/request_handler/RequestHandler.h"
+#include "../http/request_handler/RequestHandler.h"
 
 static int fork1()
 {

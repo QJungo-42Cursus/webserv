@@ -9,12 +9,8 @@ namespace Http
 			GET = 0b0001,
 			POST = 0b0010,
 			DELETE = 0b0100,
-			PUT,
-			HEAD,
-			OPTIONS,
-			TRACE,
-			CONNECT,
-			UNKNOWN
+			PUT = 0b1000,
+			UNKNOWN = 0b0000
 		};
 	}
 }

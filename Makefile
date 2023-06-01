@@ -11,14 +11,14 @@ SRCS =			src/main.cpp \
 				src/config/yaml_helper.cpp \
 				src/utils/split.cpp \
 				src/utils/get_cwd.cpp \
-				src/server/HttpResponse.cpp \
-				src/server/HttpRequest.cpp \
-				src/server/request_handler/RequestHandler.cpp \
-				src/server/request_handler/DeleteRequestHandler.cpp \
-				src/server/request_handler/GetRequestHandler.cpp \
-				src/server/request_handler/PostRequestHandler.cpp \
-				src/server/request_handler/PutRequestHandler.cpp \
-				src/server/request_handler/utils.cpp \
+				src/http/HttpResponse.cpp \
+				src/http/HttpRequest.cpp \
+				src/http/request_handler/RequestHandler.cpp \
+				src/http/request_handler/DeleteRequestHandler.cpp \
+				src/http/request_handler/GetRequestHandler.cpp \
+				src/http/request_handler/PostRequestHandler.cpp \
+				src/http/request_handler/PutRequestHandler.cpp \
+				src/http/request_handler/utils.cpp \
 				src/server/Client.cpp \
 				src/server/listenerSocket.cpp \
 				src/cgi_executor/CgiExecutor.cpp \

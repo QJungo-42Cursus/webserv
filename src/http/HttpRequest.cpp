@@ -2,7 +2,7 @@
 #include "HttpRequest.h"
 #include <iostream>
 #include <sstream>
-#include "../http/http.h"
+#include "Methods.h"
 #include "HttpResponse.h"
 
 HttpRequest::HttpRequest(const std::string& raw_request) : raw_(raw_request) {

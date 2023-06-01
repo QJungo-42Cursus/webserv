@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include "../utils/Option.h"
 #include "../utils/utils.h"
-#include "../http/http.h"
+#include "../http/Methods.h"
 
 Option<std::string> find_key_value_line(std::string &str, const std::string &key, bool remove_line)
 {

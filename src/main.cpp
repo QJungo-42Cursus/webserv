@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "webserv.hpp"
-#include "./server/request_handler/DeleteRequestHandler.h"
+#include "./http/request_handler/DeleteRequestHandler.h"
 
 static int		pollSockets(t_fdSets* fdSets, struct timeval* timeOut);
 
