@@ -15,21 +15,14 @@ public:
 
 	~Route();
 
-	struct DEFAULT
-	{
-		static const short METHODS;
-		static const bool REPERTORY_LISTING;
-		static const Option<std::string> INDEX;
-	};
 	Option<short> methods;
 	Option<std::string> redirection;
 	std::string root;
-//	Option<std::string> root;
 	bool repertory_listing;
 	Option<std::string> index;
 	Option<CgiConfig> cgi;
 	Option<std::string> upload_directory;
-    std::string name;
+	std::string name;
 };
 
 
