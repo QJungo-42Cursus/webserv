@@ -22,8 +22,8 @@ std::vector<std::string> split(const std::string &str, const std::string &delim)
 		return elems;
 	while (pos < len)
 	{
-		int find_pos = str.find(delim, pos);
-		if (find_pos < 0)
+		size_t find_pos = str.find(delim, pos);
+		if (find_pos == std::string::npos)
 		{
 			elems.push_back(str.substr(pos, len - pos));
 			break;
