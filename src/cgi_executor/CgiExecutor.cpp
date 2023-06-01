@@ -104,6 +104,10 @@ CgiExecutor::execute(const HttpRequest &request, const Config &config, const Cgi
 			new char[request_path.size() + 1],
 			NULL
 	};
+
+
+
+
 	strcpy(argv[0], cgi_config.cgi_path.c_str());
 	argv[0][cgi_config.cgi_path.size()] = '\0';
 	strcpy(argv[1], request_path.c_str());
@@ -137,6 +141,8 @@ CgiExecutor::execute(const HttpRequest &request, const Config &config, const Cgi
 		free_env(envp);
 		exit(1);
 	}
+    delete [] argv[0];
+    delete [] argv[1];
 
 	/// Write to stdin
 	write(fd_in[STDOUT_FILENO], request.get_body().c_str(), request.get_body().size());
