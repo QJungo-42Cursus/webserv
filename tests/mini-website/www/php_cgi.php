@@ -16,9 +16,12 @@
 
             // Write contents back to the file
             file_put_contents($file, $current);
+            echo '<html><body><h1>Success!</h1><p>First Name: ' . $fname . ', Last Name: ' . $lname . '</p>';
+            echo '<button onclick="window.location.href=\'index.html\';">Go Back</button>';
+            echo '</body></html>';
             echo '<script type="text/javascript">
-            window.location.reload(true);
-       </script>';
+            preventDefault();
+            </script>';
             exit();
         }
     } elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
