@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 				handleSockError(fd, configFromFd, &fdSets.main, clientArray);
 			else if (FD_ISSET(fd, &fdSets.read) && (configFromFd[fd] || !clientArray[fd]->getFlagResponse()))
 				exit = readSocket(fd, configFromFd, &fdSets, clientArray);
-			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
+			else if (FD_ISSET(fd, &fdSets.write))
 			{
 				if (clientArray[fd] && !clientArray[fd]->getFlagResponse())
 					continue;
