@@ -163,7 +163,7 @@ HttpResponse parseCGIResponse(const std::string &cgi_response)
 					std::size_t status_end = header_value.find(" ");
 					std::string status_code = header_value.substr(1, status_end - 1);
 					std::string status_text = header_value.substr(status_end + 1);
-					response.set_status(std::stoi(status_code), status_text);
+					response.set_status(std::atoi(status_code.c_str()), status_text);
 				}
 				else
 				{
