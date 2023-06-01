@@ -139,7 +139,7 @@ void	Client::setListenFd(int fd)
 	return ;
 }
 
-void	Client::setNBytesRec(int nBytesRec)
+void	Client::setNBytesRec(ssize_t nBytesRec)
 {
 	this->_nBytesRec = nBytesRec;
 	return ;

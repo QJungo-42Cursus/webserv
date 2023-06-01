@@ -42,7 +42,7 @@ class Client
 		
 		void						setFd(int fd);
 		void						setListenFd(int fd);
-		void						setNBytesRec(int nBytesRec);
+		void						setNBytesRec(ssize_t nBytesRec);
 		void						setFlagResponse(bool);
 		void						setResponse(std::string);
 		void						setFlagCloseAfterWrite(bool);
@@ -68,7 +68,7 @@ class Client
 		bool					_flagHeaderComplete;
 		int						_maxBodySize;
 
-		int						_nBytesRec;
+		ssize_t 				_nBytesRec;
 
 		bool					_flagResponse; // true when a response is ready to be sent
 		std::string				_response;

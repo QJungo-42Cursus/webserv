@@ -64,7 +64,7 @@ void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *client
 	//int		bufSize = 6145; to test if chunked recv works
 	char *buf = new char[bufSize];
 	memset(buf, 0, bufSize); //only necessary for buffer visualization
-	int nBytesRead = recv(fd, buf, bufSize, 0);
+	ssize_t nBytesRead = recv(fd, buf, bufSize, 0);
 	if (nBytesRead <= 0)
 	{
 		if (nBytesRead == 0) // should add more serv and client info
@@ -79,8 +79,9 @@ void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *client
 		return;
 	}
 	client->getRequest().append(buf, nBytesRead);
-	client->setNBytesRec(nBytesRead);
 	std::cout << buf << "===" << std::endl; // tmp
+	delete[] buf;
+	client->setNBytesRec(nBytesRead);
 	try
 	{
 		processRequest(client, config);
@@ -91,7 +92,6 @@ void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *client
 		std::cout << errStr << std::endl;
 		prepareErrorResponse(client, config, errStr);
 	}
-	delete[] buf;
 }
 
 // to be upgraded with file/handler
@@ -213,6 +213,13 @@ static void processRequest(Client *client, Config *config)
 
 	HttpRequest request((client->getHeader()).append(client->getBody()));
 
+	// TODO !!!!
+	if (request.get_path() == "/exit")
+	{
+		exit(EXIT_SUCCESS);
+	}
+	// TODO !!!!
+
 	if (request.get_method() == Http::Methods::GET)
 	{
 		GetRequestHandler get_handler(config);
@@ -226,7 +233,7 @@ static void processRequest(Client *client, Config *config)
 	else if (request.get_method() == Http::Methods::DELETE)
 	{
 		DeleteRequestHandler delete_handler(config);
-		response = delete_handler.handle_request(request); // TODO
+		response = delete_handler.handle_request(request);
 	}
 	else if (request.get_method() == Http::Methods::PUT)
 	{
