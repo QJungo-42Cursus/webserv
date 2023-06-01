@@ -4,7 +4,7 @@ int pollSockets(t_fdSets *fdSets, struct timeval *timeOut);
 
 void handleSockError(int fd, Config *configFromFd[], fd_set *mainFdSet, Client *clientArray[]);
 
-void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[]);
+bool readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[]);
 
 void writeSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[]);
 
@@ -50,12 +50,8 @@ int main(int argc, char **argv)
 	size_t nbServ = configs.size();
 	int listenSockFds[nbServ];
 	t_fdSets fdSets; // Struct with the sets of FDs to be monit. with select
-	struct timeval timeOut; // Max time for select to return if no socket has updates
 	Config *configFromFd[FD_SETSIZE] = {}; // only valid for listenFds (1 port = 1 fixed listenFd)
 	Client *clientArray[FD_SETSIZE] = {};
-
-	timeOut.tv_sec = 5;
-	timeOut.tv_usec = 0;
 
 	FD_ZERO(&fdSets.main); // make sure it's empty
 	fdSets.fdMax = 0;
@@ -74,12 +70,12 @@ int main(int argc, char **argv)
 				  << (configs[iServ]->port) << std::endl;
 	}
 
+    bool exit = false;
+
 	// Main loop
 	while (true)
 	{
 		// Poll sockets with select
-		// if (pollSockets(&fdSets, &timeOut) == 0)
-		(void) timeOut;
 		if (pollSockets(&fdSets, NULL) == 0)
 		{
 			std::cout << "Timeout while polling sockets with select..." << std::endl;
@@ -92,14 +88,26 @@ int main(int argc, char **argv)
 			if (FD_ISSET(fd, &fdSets.error))
 				handleSockError(fd, configFromFd, &fdSets.main, clientArray);
 			else if (FD_ISSET(fd, &fdSets.read) && (configFromFd[fd] || !clientArray[fd]->getFlagResponse()))
-				readSocket(fd, configFromFd, &fdSets, clientArray);
+				exit = readSocket(fd, configFromFd, &fdSets, clientArray);
 			else if (FD_ISSET(fd, &fdSets.write)) // can do read and write in same loop?
 			{
 				if (clientArray[fd] && !clientArray[fd]->getFlagResponse())
 					continue;
 				writeSocket(fd, configFromFd, &fdSets, clientArray);
 			}
+            if (exit)
+                break;
 		}
+        if (exit)
+            break;
 	}
+
+    /// Free and exit
+    std::cout << "Exiting webserv..." << std::endl;
+    for (std::vector<Config *>::iterator it = configs.begin(); it != configs.end(); ++it)
+        delete *it;
+    for (int fd = 0; fd <= fdSets.fdMax; fd++)
+        if (clientArray[fd])
+            delete clientArray[fd];
 	return (0);
 }

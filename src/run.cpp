@@ -1,6 +1,6 @@
 #include "webserv.hpp"
 
-static void processRequest(Client *client, Config *config);
+static bool processRequest(Client *client, Config *config);
 
 static std::string getServName(Config *config);
 
@@ -47,12 +47,12 @@ static std::string getServName(Config *config)
 	return ss.str();
 }
 
-void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[])
+bool readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *clientArray[])
 {
 	if (configFromFd[fd]) // if fd corresponds to a listening socket
 	{
 		handleNewConnection(fd, fdSets, clientArray, configFromFd[fd]);
-		return;
+		return false;
 	}
 
 	Client *client = clientArray[fd];
@@ -76,22 +76,24 @@ void readSocket(int fd, Config *configFromFd[], t_fdSets *fdSets, Client *client
 		delete client;
 		clientArray[fd] = NULL;
 		delete[] buf;
-		return;
+		return false;
 	}
 	client->getRequest().append(buf, nBytesRead);
 	std::cout << buf << "===" << std::endl; // tmp
 	delete[] buf;
 	client->setNBytesRec(nBytesRead);
+    bool exit = false;
 	try
 	{
-		processRequest(client, config);
+		exit = processRequest(client, config);
 	}
 	catch (std::exception const &e)
 	{
 		std::string errStr(e.what());
 		std::cout << errStr << std::endl;
-		prepareErrorResponse(client, config, errStr);
+        prepareErrorResponse(client, config, errStr);
 	}
+    return exit;
 }
 
 // to be upgraded with file/handler
@@ -194,7 +196,7 @@ int pollSockets(t_fdSets *fdSets, struct timeval *timeOut)
 	return (selectRetVal);
 }
 
-static void processRequest(Client *client, Config *config)
+static bool processRequest(Client *client, Config *config)
 {
 	int max_size = MAX_HEADER_SIZE + client->getMaxBodySize();
 
@@ -204,7 +206,7 @@ static void processRequest(Client *client, Config *config)
 	{
 		client->setFlagResponse(false); //should already be set to false (to verify)
 		std::cout << "=== Request incomplete: server keeps reading...===" << std::endl;
-		return;
+		return false;
 	}
 
 	// Create a new response
@@ -213,12 +215,7 @@ static void processRequest(Client *client, Config *config)
 
 	HttpRequest request((client->getHeader()).append(client->getBody()));
 
-	// TODO !!!!
-	if (request.get_path() == "/exit")
-	{
-		exit(EXIT_SUCCESS);
-	}
-	// TODO !!!!
+    bool exit = (request.get_path() == "/exit");
 
 	if (request.get_method() == Http::Methods::GET)
 	{
@@ -254,6 +251,7 @@ static void processRequest(Client *client, Config *config)
 	client->clearHeader();
 	client->clearBody();
 	client->setFlagHeaderComplete(false);
+    return exit;
 }
 
 // quite some unnecesarry repeated operations in current design...
