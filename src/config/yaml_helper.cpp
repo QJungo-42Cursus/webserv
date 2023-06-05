@@ -84,9 +84,7 @@ Option<unsigned int> get_client_max_body_size(std::string &server_config)
 		char unit = value[value.size() - 1];
 
 		if (unit >= '0' && unit <= '9')
-		{
 			return Option<unsigned int>::Some(std::atoi(value.c_str()));
-		}
 
 		if (unit != 'm' && unit != 'k')
 			throw std::runtime_error("Invalid config file, client_max_body_size must be in the form '10m'/'10k'");

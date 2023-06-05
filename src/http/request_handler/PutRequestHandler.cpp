@@ -20,28 +20,22 @@ HttpResponse PutRequestHandler::handle_request(const HttpRequest &request)
 
     if (is_directory)
     {
-        if (route->index.isSome()) {
+        if (route->index.isSome())
             requested_path += route->index.unwrap();
-        }    
-        else {
+        else
             return handle_error_static(403, "Forbidden", config_);
-        }
     }
 
-	std::string parent_dir = requested_path.substr(0, requested_path.find_last_of('/'));
-    if (!is_path_dir(parent_dir)) {
+    std::string parent_dir = requested_path.substr(0, requested_path.find_last_of('/'));
+    if (!is_path_dir(parent_dir))
         return handle_error_static(409, "Conflict", config_);
-    }
     std::ofstream file(requested_path.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
-	if (!file.is_open())
-		return handle_error_static(500, "Internal Server Error", config_);
-	file.write(request.get_body().c_str(), request.get_body().size());
-	file.close();
-
+    if (!file.is_open())
+        return handle_error_static(500, "Internal Server Error", config_);
+    file.write(request.get_body().c_str(), request.get_body().size());
+    file.close();
     response.set_status(file.tellp() == 0 ? 201 : 200, file.tellp() == 0 ? "Created" : "OK");
-
     return response;
-	
 }
 
 PutRequestHandler::PutRequestHandler(

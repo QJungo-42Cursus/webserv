@@ -1,8 +1,6 @@
 #include "GetRequestHandler.h"
 #include "../../cgi_executor/CgiExecutor.h"
 
-
-
 HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 {
 	Route *route;
@@ -20,7 +18,6 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 	if (!is_file && !is_directory)
 		return handle_error_static(404, "Not Found (file/dir)", config_);
 
-
 	HttpResponse response;
 	if (is_directory)
 	{
@@ -33,13 +30,9 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 			return response;
 		}
 		else if (route->index.isSome())
-		{
 			requested_path += route->index.unwrap();
-		}
 		else
-		{
 			return handle_error_static(403, "Forbidden", config_);
-		}
 	}
 	if (is_path_file(requested_path) && route->cgi.isSome())
 	{
@@ -69,9 +62,7 @@ HttpResponse GetRequestHandler::handle_request(const HttpRequest &request)
 	std::ifstream file(requested_path.c_str(), std::ios::in | std::ios::binary);
 
 	if (!file)
-	{
 		return handle_error_static(404, "Not Found", config_);
-	}
 	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	response.set_body(content);
 	response.set_status(200, "OK");

@@ -279,11 +279,9 @@ static void parse_routes(std::string &str, std::map<std::string, Route> &map)
 			throw std::runtime_error("Invalid config file, a route must start with '- '");
 		if (!is_first && is_in_new_route)
 		{
-			// Va parser les infos de la route (de la derniere iteration)
 			if (!map.count(route_path))
 			{
 				map.insert(std::pair<std::string, Route>(route_path, Route(route_infos, route_path)));
-//                map[route_path] = Route(route_infos, route_path);
 				route_infos.clear();
 			}
 		}
@@ -305,10 +303,7 @@ static void parse_routes(std::string &str, std::map<std::string, Route> &map)
 		}
 	}
 	if (!map.count(route_path))
-	{
 		map.insert(std::pair<std::string, Route>(route_path, Route(route_infos, route_path)));
-//        map[route_path] = Route(route_infos, route_path);
-	}
 
 	for (std::map<std::string, Route>::iterator it = map.begin(); it != map.end(); ++it)
 	{

@@ -5,7 +5,6 @@
 #include "../HttpResponse.h"
 #include "../../config/Config.h"
 
-std::pair<std::string, Option<std::string> > get_path_and_file(const std::string &path);
 std::string dir_listing(std::string const &path, std::string const &uri);
 bool is_path_dir(const std::string &path);
 bool is_path_file(const std::string& path);

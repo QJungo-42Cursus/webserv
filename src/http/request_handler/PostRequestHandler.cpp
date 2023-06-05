@@ -22,12 +22,10 @@ HttpResponse PostRequestHandler::handle_request(const HttpRequest &request)
 
     if (is_directory)
     {
-        if (route->index.isSome()) {
+        if (route->index.isSome())
             requested_path += route->index.unwrap();
-        }    
-        else {
+        else
             return handle_error_static(403, "Forbidden", config_);
-        }
     }
     if (is_path_file(requested_path) && route->cgi.isSome())
 	{

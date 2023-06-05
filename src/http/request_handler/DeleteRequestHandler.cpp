@@ -47,11 +47,8 @@ HttpResponse DeleteRequestHandler::handle_request(const HttpRequest &request)
     }
     std::string file_path = real_path(*route, request);
     if (std::remove(file_path.c_str()) != 0)
-    {
         response.set_status(500, "Internal Server Error");
-    } else
-    {
+    else
         response.set_status(200, "OK");
-    }
     return response;
 }
