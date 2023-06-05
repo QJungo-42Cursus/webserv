@@ -95,6 +95,22 @@ static void free_env(char **envp)
 	delete[] envp;
 }
 
+static std::string readAll(int fd, int *size)
+{
+    std::string result;
+    char buff[2048] = {0};
+    while (true)
+    {
+        std::size_t count = read(fd, buff, 2047);
+        if (count == 0)
+            break;
+        buff[count] = 0;
+        result += buff;
+    }
+    if (size)
+        *size = result.size();
+    return result;
+}
 
 std::string
 CgiExecutor::execute(const HttpRequest &request, const Config &config, const CgiConfig &cgi_config, const Route &route)
@@ -182,9 +198,8 @@ CgiExecutor::execute(const HttpRequest &request, const Config &config, const Cgi
 		throw std::runtime_error("CGI exit with status not 0");
 
 	/// Read from stdout
-	char buff[2048] = {0};
-	std::size_t count = read(fd_std[STDIN_FILENO], buff, 2047);
-	buff[count] = 0;
+    std::string result = readAll(fd_std[STDIN_FILENO], NULL);
 	close(fd_std[STDIN_FILENO]);
-	return buff;
+	return result;
 }
+
