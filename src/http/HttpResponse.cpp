@@ -41,16 +41,10 @@ void HttpResponse::set_body(const std::string &body)
 std::string HttpResponse::to_string() const
 {
     std::ostringstream response_stream;
-
     response_stream << _version << " " << _status_code << " " << _status_description << "\r\n";
-
     for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
-    {
         response_stream << it->first << ": " << it->second << "\r\n";
-    }
-
     response_stream << "Content-Length: " << _body.size() << "\r\n\r\n";
     response_stream << _body;
-
     return response_stream.str();
 }
