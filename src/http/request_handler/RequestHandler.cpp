@@ -118,7 +118,7 @@ Route *RequestHandler::find_route(const std::string &requested_path) const
             best_route = it->first;
         }
     }
-    return (Route *) best_match; // TODO ciao
+    return (Route *) best_match;
 }
 
 bool RequestHandler::is_method_allowed(const Route *route, const HttpRequest &request)
