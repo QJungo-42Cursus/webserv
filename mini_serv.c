@@ -1,5 +1,7 @@
 // ======= V2 ======
-
+// cette V2 n'a pas marche (au debut) a cause d'un crash au test 8. cause (je pense) par trop de lecture / ouverture de buff.
+// aussi, j'envoyait au 1024 fd (sans check le isset et le bigger_fd)
+// a la fin j'ai push cette version mais ca na pas passe a cause d'un 'client' pas remis a la ligne
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
