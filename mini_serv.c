@@ -1,3 +1,140 @@
+// ======= V2 ======
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#define BUFF 2048
+
+fd_set set_main, set_read, set_write;
+int bigger_fd = 0;
+
+void crash()
+{
+	write(2, "Fatal error\n", strlen("Fatal error\n"));
+	exit(1);
+}
+
+void send_all(char *message, int sender, int server)
+{
+	for (int fds = 3; fds < bigger_fd; fds++) {
+		if (fds != sender && fds != server && FD_ISSET(fds, &set_write))
+			send(fds, message, strlen(message), 0);
+	}
+}
+
+int main(int argc, char **argv) {
+	if (argc != 2) {
+		write(2, "Wrong number of arguments\n", strlen("Wrong number of arguments\n"));
+		exit(1);
+	}
+
+	// socket create and verification
+	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (server_fd == -1)
+		crash();
+
+	// assign IP, PORT
+	struct sockaddr_in servaddr;
+	bzero(&servaddr, sizeof(servaddr));
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
+	servaddr.sin_port = htons(atoi(argv[1]));
+
+	// Binding newly created socket to given IP and verification
+	if ((bind(server_fd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) < 0)
+		crash();
+	if (listen(server_fd, 10) < 0)
+		crash();
+
+
+	FD_ZERO(&set_main);
+	FD_SET(server_fd, &set_main);
+	int ids[1050];
+	int last_id = 0;
+	int last_msg_no_nl = 0;
+
+	bigger_fd = server_fd + 10;
+
+	while (1) {
+		FD_COPY(&set_main, &set_read);
+		FD_COPY(&set_main, &set_write);
+		select(bigger_fd, &set_read, &set_write, NULL, NULL);
+		for (int current_fd = 3; current_fd < bigger_fd; current_fd++) {
+			if (!FD_ISSET(current_fd, &set_read))
+				continue;
+			if (current_fd == server_fd) {
+				int new = accept(current_fd, NULL, 0);
+				if (new < 0)
+					crash();
+				if (bigger_fd < new)
+					bigger_fd = new + 10;
+				FD_SET(new, &set_main);
+				char msg[90];
+				sprintf(msg, "server: client %d just arrived\n", last_id);
+				send_all(msg, new, server_fd);
+				last_msg_no_nl = 0;
+				ids[new] = last_id;
+				last_id++;
+				break;
+			}
+			char buffer[BUFF + 5];
+			bzero(buffer, BUFF + 5);
+			int len = recv(current_fd, buffer, BUFF, 0);
+			if (len <= 0) {
+				char msg[90];
+				sprintf(msg, "server: client %d just left\n", ids[current_fd]);
+				send_all(msg, current_fd, server_fd);
+				last_msg_no_nl = 0;
+				FD_CLR(current_fd, &set_main);
+				close(current_fd);
+				break;
+			}
+
+			char last_char = buffer[len - 1];
+			// printf("--- '%c' ---\n", last_char);
+			int i = 0;
+			int last_index = 0;
+
+			while (buffer[i]) {
+				if (buffer[i] == '\n') {
+					// printf("msg !\n");
+					buffer[i] = 0;
+					char msg[BUFF + 200];
+					if (last_msg_no_nl) {
+						sprintf(msg, "%s\n", &buffer[last_index]);
+					} else {
+						sprintf(msg, "client %d: %s\n", ids[current_fd], &buffer[last_index]);
+					}
+					last_msg_no_nl = 0;
+					send_all(msg, current_fd, server_fd);
+					last_index = i + 1;
+				}
+				i++;
+			}
+
+			if ((last_index == 0) || (buffer[i] == 0 && last_char != '\n')) {
+				// printf("last is no nl\n");
+				char msg[BUFF + 200];
+				if (last_msg_no_nl) {
+					sprintf(msg, "%s", &buffer[last_index]);
+				} else {
+					sprintf(msg, "client %d: %s", ids[current_fd], &buffer[last_index]);
+				}
+				last_msg_no_nl = 1;
+				send_all(msg, current_fd, server_fd);
+			}
+			// printf("\n");
+		}
+	}
+}
+
+// ================= V1 ===========
+
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
